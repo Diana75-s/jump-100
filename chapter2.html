@@ -1,0 +1,849 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Chapter 2 · 剧情选择</title>
+  <style>
+    :root{
+      --bg1:#0b0f1a;
+      --bg2:#0f172a;
+      --card:rgba(255,255,255,.08);
+      --card2:rgba(255,255,255,.12);
+      --ink:rgba(255,255,255,.92);
+      --muted:rgba(255,255,255,.65);
+      --muted2:rgba(255,255,255,.45);
+      --accent:#7dd3fc;
+      --danger:#ff4d4f;
+      --ok:#34d399;
+      --shadow:0 18px 60px rgba(0,0,0,.45);
+      --radius:22px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0}
+    body{
+      background: radial-gradient(1200px 800px at 30% 10%, #1f2a44 0%, transparent 60%),
+                  radial-gradient(1000px 700px at 80% 40%, #0b2b3a 0%, transparent 55%),
+                  linear-gradient(180deg, var(--bg2), var(--bg1));
+      color:var(--ink);
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,"PingFang SC","Noto Sans SC","Microsoft YaHei",sans-serif;
+      overflow:hidden;
+    }
+
+    /* phone frame */
+    .wrap{height:100%;display:flex;align-items:center;justify-content:center;padding:18px}
+    .phone{
+      width:min(420px, 100%);
+      height:min(860px, 100%);
+      background:rgba(0,0,0,.25);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:34px;
+      box-shadow: var(--shadow);
+      position:relative;
+      overflow:hidden;
+      backdrop-filter: blur(10px);
+    }
+    .safe{
+      padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom)) 16px;
+      height:100%;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      min-height:0; /* ✅关键：允许内部 flex 正确收缩 */
+    }
+
+    .topbar{
+      display:flex; align-items:center; justify-content:space-between;
+      font-size:12px; color:var(--muted2);
+      letter-spacing:.2px;
+      flex:0 0 auto;
+    }
+    .pill{
+      background:rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.10);
+      padding:8px 10px;
+      border-radius:999px;
+      display:inline-flex; gap:8px; align-items:center;
+    }
+    .dot{width:6px;height:6px;border-radius:50%;background:var(--accent); box-shadow:0 0 18px rgba(125,211,252,.6)}
+
+    /* ✅ stage 必须能分配高度 */
+    .stage{
+      flex:1 1 auto;
+      min-height:0;             /* ✅关键 */
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      position:relative;
+    }
+
+    /* scene header */
+    .header{
+      display:flex; align-items:flex-end; justify-content:space-between; gap:10px;
+      flex:0 0 auto;
+    }
+    .title{
+      font-size:18px; font-weight:700; letter-spacing:.2px;
+    }
+    .subtitle{font-size:12px;color:var(--muted2)}
+    .progress{
+      height:8px; width:120px; border-radius:999px;
+      background:rgba(255,255,255,.10);
+      overflow:hidden;
+    }
+    .bar{
+      height:100%; width:0%;
+      background:linear-gradient(90deg, rgba(125,211,252,.9), rgba(52,211,153,.85));
+      border-radius:999px;
+      transition: width 600ms ease;
+    }
+
+    /* cards */
+    .card{
+      background:var(--card);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius: var(--radius);
+      padding:14px 14px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.25);
+    }
+
+    /* ✅ 对话区域：占据剩余空间并可滚动 */
+    .card.dialogue{
+      flex:1 1 auto;
+      min-height:0;                 /* ✅关键 */
+      overflow:auto;                /* ✅允许滚动 */
+      -webkit-overflow-scrolling: touch;
+    }
+    .lines{
+      display:flex; flex-direction:column; gap:8px;
+      min-height:0;                 /* ✅关键 */
+      padding-bottom:6px;
+    }
+
+    .line{
+      opacity:0;
+      transform: translateY(10px);
+      transition: opacity 420ms ease, transform 420ms ease;
+      color:var(--ink);
+      line-height:1.55;
+      font-size:15px;
+      white-space:pre-wrap;
+    }
+    .line.show{opacity:1; transform: translateY(0)}
+    .line.muted{color:var(--muted)}
+    .line.sys{color:var(--muted2); font-size:13px}
+    .line.em{color:var(--accent); font-weight:650}
+
+    /* choices */
+    .choices{display:grid; gap:10px}
+    .btn{
+      width:100%;
+      border-radius:16px;
+      padding:12px 12px;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.08);
+      color:var(--ink);
+      font-size:15px;
+      text-align:left;
+      cursor:pointer;
+      transition: transform 120ms ease, background 240ms ease, border-color 240ms ease, opacity 240ms ease;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+      position:relative;
+      overflow:hidden;
+    }
+    .btn:hover{background:rgba(255,255,255,.12)}
+    .btn:active{transform: translateY(1px) scale(.99)}
+    .btn .tag{
+      display:inline-flex; align-items:center; justify-content:center;
+      width:26px; height:26px; border-radius:10px;
+      margin-right:10px;
+      font-weight:800;
+      background:rgba(125,211,252,.12);
+      border:1px solid rgba(125,211,252,.20);
+      color:rgba(125,211,252,.95);
+      font-size:13px;
+    }
+    .btn.disabled{opacity:.45; pointer-events:none}
+    .btn.fade{opacity:.22; filter: blur(.2px)}
+    .btn::after{
+      content:"";
+      position:absolute; inset:-40%;
+      background: radial-gradient(circle at 20% 20%, rgba(255,255,255,.16), transparent 55%);
+      transform: rotate(12deg);
+      opacity:0;
+      transition: opacity 240ms ease;
+    }
+    .btn:hover::after{opacity:1}
+
+    /* overlays for endings */
+    .overlay{
+      position:absolute; inset:0;
+      display:flex; align-items:center; justify-content:center;
+      background:rgba(0,0,0,.55);
+      backdrop-filter: blur(8px);
+      opacity:0; pointer-events:none;
+      transition: opacity 360ms ease;
+      padding:18px;
+    }
+    .overlay.show{opacity:1; pointer-events:auto}
+    .panel{
+      width:100%;
+      max-width: 380px;
+      background:rgba(10,14,24,.78);
+      border:1px solid rgba(255,255,255,.12);
+      border-radius: 26px;
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .panelHead{
+      padding:14px 14px;
+      border-bottom:1px solid rgba(255,255,255,.10);
+      display:flex; align-items:center; justify-content:space-between;
+      gap:10px;
+    }
+    .panelHead .h{font-weight:750}
+    .panelBody{padding:14px 14px}
+    .small{font-size:12px;color:var(--muted2)}
+
+    /* chat mock */
+    .chat{
+      background:rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius: 20px;
+      padding:12px;
+      display:flex; flex-direction:column; gap:10px;
+    }
+    .msg{
+      max-width: 82%;
+      padding:10px 12px;
+      border-radius: 16px;
+      font-size:14px;
+      line-height:1.4;
+      border:1px solid rgba(255,255,255,.10);
+      background:rgba(255,255,255,.08);
+    }
+    .msg.me{align-self:flex-end; background:rgba(125,211,252,.10); border-color:rgba(125,211,252,.18)}
+    .msg.them{align-self:flex-start}
+    .chatTop{
+      display:flex; align-items:center; justify-content:space-between;
+      color:var(--muted2);
+      font-size:12px;
+      margin-bottom:2px;
+    }
+    .excl{
+      display:inline-flex; align-items:center; gap:8px;
+      color: rgba(255,255,255,.85);
+    }
+    .badgeDanger{
+      width:16px;height:16px;border-radius:50%;
+      background:var(--danger);
+      display:inline-flex; align-items:center; justify-content:center;
+      color:#fff; font-weight:900; font-size:12px;
+      box-shadow:0 0 18px rgba(255,77,79,.45);
+    }
+
+    /* call mock */
+    .call{
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      gap:12px; padding:18px;
+    }
+    .avatar{
+      width:84px;height:84px;border-radius:28px;
+      background:rgba(125,211,252,.10);
+      border:1px solid rgba(125,211,252,.20);
+      display:flex; align-items:center; justify-content:center;
+      font-weight:900;
+      color:rgba(125,211,252,.95);
+      font-size:24px;
+      box-shadow:0 0 30px rgba(125,211,252,.15);
+      transform: translateZ(0);
+      animation: floaty 2.6s ease-in-out infinite;
+    }
+    @keyframes floaty{ 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+    .ring{
+      width:10px;height:10px;border-radius:50%;
+      background:var(--ok);
+      box-shadow:0 0 18px rgba(52,211,153,.55);
+    }
+    .shake{
+      animation: shake 420ms ease;
+    }
+    @keyframes shake{
+      0%,100%{transform:translateX(0)}
+      20%{transform:translateX(-6px)}
+      40%{transform:translateX(6px)}
+      60%{transform:translateX(-4px)}
+      80%{transform:translateX(4px)}
+    }
+
+    /* footer */
+    .footer{
+      display:flex; justify-content:space-between; align-items:center; gap:10px;
+      flex:0 0 auto;
+    }
+    .linkbtn{
+      background:transparent;
+      border:1px solid rgba(255,255,255,.14);
+      color:var(--muted);
+      border-radius:14px;
+      padding:10px 12px;
+      cursor:pointer;
+      transition: background 200ms ease, transform 120ms ease;
+    }
+    .linkbtn:hover{background:rgba(255,255,255,.06)}
+    .linkbtn:active{transform: translateY(1px)}
+    .primary{
+      border-color: rgba(125,211,252,.28);
+      color: rgba(125,211,252,.95);
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="phone">
+      <div class="safe">
+        <div class="topbar">
+          <div class="pill"><span class="dot"></span><span id="modeText">Chapter 2 · 剧情选择</span></div>
+          <div class="pill"><span id="clock">--:--</span></div>
+        </div>
+
+        <div class="stage">
+          <div class="header">
+            <div>
+              <div class="title" id="sceneTitle">Scene 1 · 那通电话之后</div>
+              <div class="subtitle" id="sceneSub">吃吃视角 · 你还有一句话没说完</div>
+            </div>
+            <div class="progress" aria-label="progress">
+              <div class="bar" id="bar"></div>
+            </div>
+          </div>
+
+          <div class="card dialogue">
+            <div class="lines" id="lines"></div>
+          </div>
+
+          <div class="card">
+            <div class="choices" id="choices"></div>
+          </div>
+        </div>
+
+        <div class="footer">
+          <button class="linkbtn" id="restartBtn">重来</button>
+          <button class="linkbtn primary" id="skipBtn">快速跳过文字</button>
+        </div>
+      </div>
+
+      <!-- ending overlay -->
+      <div class="overlay" id="overlay">
+        <div class="panel">
+          <div class="panelHead">
+            <div class="h" id="endTitle">结局</div>
+            <button class="linkbtn" id="continueBtn">继续</button>
+          </div>
+          <div class="panelBody" id="endBody"></div>
+          <div class="panelBody small" id="endNote"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+
+  // --- clock ---
+  function tickClock(){
+    const d = new Date();
+    const hh = String(d.getHours()).padStart(2,'0');
+    const mm = String(d.getMinutes()).padStart(2,'0');
+    $('clock').textContent = `${hh}:${mm}`;
+  }
+  tickClock(); setInterval(tickClock, 10000);
+
+  // --- data ---
+  const game = { nodeId: "S1_START", fast: false };
+  let isTyping = false;
+  let cancelToken = { cancelled:false };
+
+  const nodes = {
+    // Scene 1
+    S1_START: {
+      scene: 1,
+      title: "Scene 1 · 那通电话之后",
+      sub: "吃吃视角 · 你还有一句话没说完",
+      lines: [
+        "电话挂断了",
+        "你刚刚\n把自己从小到大的经历\n一股脑地说完",
+        "你说\n不管以什么关系\n都希望以后还能继续相处",
+        {pause: 1000},
+        "手机又亮了一下",
+        {em: "她发来一句\n晚安"},
+        {pause: 800},
+        "你盯着那两个字\n看了一会儿",
+        "你突然想起\n过去的一段经历",
+        "那一次\n你也是这样\n话说到一半\n就被一句\n看起来很正常的话\n结束了",
+        "你意识到\n你还有一句话\n没有说完",
+        "那句话\n如果现在不说\n可能就再也没有机会了",
+      ],
+      choices: [
+        { key:"A", text:"洗漱好，休息", next:"S1_END_A1" },
+        { key:"B", text:"再打一个电话给莫斯科的小矮人", next:"S1_END_B1" },
+      ],
+      progress: 33,
+    },
+
+    S1_END_A1: {
+      scene: 1,
+      ending: true,
+      endTitle: "结局 A1 · 消息发送失败",
+      endBody: () => renderChatFail(),
+      endNote: "你没有做错。\n只是有些沉默会成为最后一次。",
+      nextAfterEnding: "S2_START",
+      progress: 33,
+    },
+
+    S1_END_B1: {
+      scene: 1,
+      ending: true,
+      endTitle: "结局 B1 · 强行续命",
+      endBody: () => renderCallScene("莫斯科的小矮人", [
+        "她几乎是慌乱地接起了电话",
+        "问你：怎么了",
+        "你语气变得很认真",
+        "你说：无论如何\n不可以删除我",
+        "你希望\n明天还能继续聊天",
+        "她沉默了一下\n然后答应了",
+        "电话挂断\n夜重新安静下来",
+      ]),
+      endNote: "你把话说完了。\n但结局仍不保证由你决定。",
+      nextAfterEnding: "S2_START",
+      progress: 33,
+    },
+
+    // Scene 2
+    S2_START: {
+      scene: 2,
+      title: "Scene 2 · 她哭的时候",
+      sub: "价值站位 · 你知道这会改变她看你的方式",
+      lines: [
+        "她开始跟你说\n她和前任分手的原因",
+        "不是某一件具体的事",
+        "而是\n一次次关于男女对立的争吵",
+        "她说\n她只是想被理解",
+        "但每一次讨论\n最后都会变成\n谁站在哪一边",
+        "说着说着\n她哭了",
+        "你意识到\n她不是在问你\n谁对谁错",
+        "她只是\n有点撑不住了",
+        {pause: 900},
+        {muted:"你知道\n不管你接下来怎么回应\n都会改变\n她看你的方式"},
+      ],
+      choices: [
+        { key:"A", text:"先站在她这边", next:"S2_END_A2" },
+        { key:"B", text:"先听清楚，再分析", next:"S2_END_B2" },
+        { key:"C", text:"直说你不同意她的看法", next:"S2_END_C2" },
+      ],
+      progress: 66,
+    },
+
+    S2_END_A2: {
+      scene: 2, ending: true,
+      endTitle: "结局 A2 · 被理解，但不被信任",
+      endBody: () => renderSystemPanel([
+        "你没有打断她",
+        "你顺着她的话\n一句一句安慰",
+        "她愣了一下",
+        "然后她突然意识到\n你没有在想",
+        "你只是在\n陪她说话",
+        {danger:"她选择拉黑你"},
+      ]),
+      endNote: "情绪对齐有时会被误读为敷衍。",
+      nextAfterEnding: "S3_START",
+      progress: 66,
+    },
+
+    S2_END_B2: {
+      scene: 2, ending: true,
+      endTitle: "结局 B2 · 被尊重，但距离拉开",
+      endBody: () => renderSystemPanel([
+        "你让她慢慢说\n没有急着回应",
+        "等她说完\n你才开始分析",
+        "她听得很认真",
+        "没有反驳\n也没有表示赞同",
+        {muted:"她依旧关心\n但不再靠近"},
+        {ok:"她保留了你的联系方式"},
+      ]),
+      endNote: "正确不等于靠近。",
+      nextAfterEnding: "S3_START",
+      progress: 66,
+    },
+
+    S2_END_C2: {
+      scene: 2, ending: true,
+      endTitle: "结局 C2 · 静默不回",
+      endBody: () => renderSystemPanel([
+        "你说出了你的真实想法",
+        "她没有反驳\n只是笑了一下",
+        {pause: 700},
+        {muted:"她没有删除你\n聊天记录也还在"},
+        {danger:"只是从那天开始\n你发出去的每一条消息\n都没有再收到回应"},
+      ]),
+      endNote: "最冷的不是删除，是还在，但不再响应。",
+      nextAfterEnding: "S3_START",
+      progress: 66,
+    },
+
+    // Scene 3
+    S3_START: {
+      scene: 3,
+      title: "Scene 3 · 洗澡时的那条消息",
+      sub: "节奏权重 · 回不回不是态度，是权重",
+      lines: [
+        "你在洗澡",
+        "水声盖过了一切",
+        {pause: 700},
+        {muted:"手机震动了一下"},
+        "你低头看了一眼",
+        {em:"是她"},
+        {pause: 800},
+        "你意识到",
+        "现在回不回\n不是态度问题",
+        "而是节奏问题",
+      ],
+      choices: [
+        { key:"A", text:"擦干手，先回复她", next:"S3_END_A3" },
+        { key:"B", text:"假装没看见，先洗完澡", next:"S3_END_B3" },
+      ],
+      progress: 100,
+    },
+
+    S3_END_A3: {
+      scene: 3, ending: true,
+      endTitle: "结局 A3 · 节奏慢慢重合",
+      endBody: () => renderSystemPanel([
+        "你擦干手\n很快回了她的消息",
+        "她回复得比平时快了一点\n但语气没有变化",
+        {muted:"你感觉得到\n她开始对你动心\n但没有说出口"},
+        {ok:"她也开始\n边回消息\n边做自己的事情"},
+      ]),
+      endNote: "靠近不是表白，是节奏开始同步。",
+      nextAfterEnding: "THE_END",
+      progress: 100,
+    },
+
+    S3_END_B3: {
+      scene: 3, ending: true,
+      endTitle: "结局 B3 · 权重下调",
+      endBody: () => renderSystemPanel([
+        "你继续洗澡\n没有回她",
+        "等你出来的时候\n她已经发了好几条消息",
+        {muted:"语气依旧热情\n没有不满"},
+        {danger:"只是从那之后\n当她在忙的时候\n她会下意识屏蔽你的消息"},
+        {muted:"直到忙完\n才回复你"},
+      ]),
+      endNote: "热情仍在，但你的消息不再优先。",
+      nextAfterEnding: "THE_END",
+      progress: 100,
+    },
+
+    THE_END: {
+      scene: 4,
+      title: "Chapter 2 · 结束",
+      sub: "你做的每一步都合理，但结局不由选择保证",
+      lines: [
+        {sys:"[系统提示] 本章节已结束"},
+        "你做的每一个选择\n都很合理",
+        "只是有些关系\n从一开始\n就不交给选择来决定",
+      ],
+      choices: [
+        { key:"↺", text:"再玩一次（从头）", next:"S1_START" },
+      ],
+      progress: 100,
+    },
+  };
+
+  // --- helpers ---
+  function setProgress(pct){ $('bar').style.width = `${pct}%`; }
+
+  function setHeader(node){
+    $('sceneTitle').textContent = node.title || `Scene ${node.scene}`;
+    $('sceneSub').textContent = node.sub || "";
+    setProgress(node.progress ?? 0);
+  }
+
+  function clearLines(){ $('lines').innerHTML = ""; }
+
+  function vibrate(ms=15){
+    try{ if (navigator.vibrate) navigator.vibrate(ms); }catch(_){}
+  }
+
+  function wait(ms){ return new Promise(r => setTimeout(r, ms)); }
+
+  // ✅关键：插入行后自动滚到底
+  function addLine(text, cls=""){
+    const div = document.createElement('div');
+    div.className = `line ${cls}`.trim();
+    div.textContent = text;
+    $('lines').appendChild(div);
+
+    requestAnimationFrame(() => {
+      div.classList.add('show');
+
+      // ✅自动滚动到最新内容
+      const dlg = document.querySelector('.card.dialogue');
+      dlg.scrollTop = dlg.scrollHeight;
+    });
+  }
+
+  async function playLines(lines){
+    isTyping = true;
+    cancelToken.cancelled = false;
+
+    for (const item of lines){
+      if (cancelToken.cancelled) break;
+
+      if (typeof item === "string"){
+        addLine(item);
+        await wait(game.fast ? 0 : 320);
+        continue;
+      }
+      if (item.pause){
+        await wait(game.fast ? 0 : item.pause);
+      } else if (item.muted){
+        addLine(item.muted, "muted");
+        await wait(game.fast ? 0 : 320);
+      } else if (item.sys){
+        addLine(item.sys, "sys");
+        await wait(game.fast ? 0 : 320);
+      } else if (item.em){
+        addLine(item.em, "em");
+        await wait(game.fast ? 0 : 320);
+      } else if (item.danger){
+        addLine(item.danger, "em");
+        document.querySelector('.phone').classList.add('shake');
+        vibrate(30);
+        await wait(420);
+        document.querySelector('.phone').classList.remove('shake');
+      } else if (item.ok){
+        addLine(item.ok, "muted");
+        await wait(game.fast ? 0 : 320);
+      }
+    }
+
+    isTyping = false;
+  }
+
+  function escapeHTML(s){
+    return String(s)
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#39;");
+  }
+
+  function renderChoices(choices){
+    const box = $('choices');
+    box.innerHTML = "";
+    for (const c of choices){
+      const btn = document.createElement('button');
+      btn.className = "btn";
+      btn.innerHTML = `<span class="tag">${escapeHTML(c.key)}</span>${escapeHTML(c.text)}`;
+      btn.onclick = () => onChoose(btn, c);
+      box.appendChild(btn);
+    }
+  }
+
+  function lockOtherButtons(activeBtn){
+    [...$('choices').querySelectorAll('.btn')].forEach(b => {
+      if (b !== activeBtn) b.classList.add('fade');
+      else b.classList.add('disabled');
+    });
+  }
+
+  function showOverlay(title, bodyNode, note){
+    $('endTitle').textContent = title || "结局";
+    const endBody = $('endBody');
+    endBody.innerHTML = "";
+    endBody.appendChild(bodyNode);
+    $('endNote').textContent = note || "";
+    $('overlay').classList.add('show');
+  }
+
+  function hideOverlay(){ $('overlay').classList.remove('show'); }
+
+  // --- ending UI blocks ---
+  function renderChatFail(){
+    const wrap = document.createElement('div');
+    wrap.className = "chat";
+
+    const top = document.createElement('div');
+    top.className = "chatTop";
+    top.innerHTML = `<span class="excl"><span class="badgeDanger">!</span> 红色感叹号</span><span>发送失败</span>`;
+    wrap.appendChild(top);
+
+    const them = document.createElement('div');
+    them.className = "msg them";
+    them.textContent = "抱歉。";
+    wrap.appendChild(them);
+
+    const me = document.createElement('div');
+    me.className = "msg me";
+    me.textContent = "早安";
+    wrap.appendChild(me);
+
+    const sys = document.createElement('div');
+    sys.className = "small";
+    sys.style.marginTop = "6px";
+    sys.style.color = "rgba(255,255,255,.55)";
+    sys.textContent = "系统提示：消息发送失败";
+    wrap.appendChild(sys);
+
+    return wrap;
+  }
+
+  function renderCallScene(name, lines){
+    const card = document.createElement('div');
+    card.className = "call";
+
+    const av = document.createElement('div');
+    av.className = "avatar";
+    av.textContent = "☎";
+    card.appendChild(av);
+
+    const meta = document.createElement('div');
+    meta.style.textAlign = "center";
+    meta.innerHTML = `<div style="font-weight:750">${escapeHTML(name)}</div><div class="small">通话中 <span class="ring"></span></div>`;
+    card.appendChild(meta);
+
+    const text = document.createElement('div');
+    text.style.width = "100%";
+    text.style.display = "grid";
+    text.style.gap = "8px";
+    text.style.marginTop = "8px";
+
+    lines.forEach(s => {
+      const p = document.createElement('div');
+      p.className = "msg them";
+      p.style.maxWidth = "100%";
+      p.style.background = "rgba(255,255,255,.06)";
+      p.textContent = String(s);
+      text.appendChild(p);
+    });
+
+    card.appendChild(text);
+    return card;
+  }
+
+  function renderSystemPanel(lines){
+    const box = document.createElement('div');
+    box.style.display = "grid";
+    box.style.gap = "10px";
+
+    lines.forEach(item => {
+      if (typeof item === "string"){
+        const d = document.createElement('div');
+        d.className = "msg them";
+        d.style.maxWidth = "100%";
+        d.style.background = "rgba(255,255,255,.06)";
+        d.textContent = item;
+        box.appendChild(d);
+        return;
+      }
+      if (item.pause) return;
+
+      const d = document.createElement('div');
+      d.className = "msg them";
+      d.style.maxWidth = "100%";
+      d.style.background = "rgba(255,255,255,.06)";
+
+      if (item.danger){
+        d.style.borderColor = "rgba(255,77,79,.35)";
+        d.style.background = "rgba(255,77,79,.10)";
+        d.textContent = item.danger;
+      } else if (item.ok){
+        d.style.borderColor = "rgba(52,211,153,.30)";
+        d.style.background = "rgba(52,211,153,.10)";
+        d.textContent = item.ok;
+      } else if (item.muted){
+        d.style.opacity = ".86";
+        d.textContent = item.muted;
+      } else {
+        d.textContent = JSON.stringify(item);
+      }
+      box.appendChild(d);
+    });
+
+    return box;
+  }
+
+  // --- flow ---
+  async function goto(nodeId){
+    game.nodeId = nodeId;
+    const node = nodes[nodeId];
+    if (!node) return;
+
+    setHeader(node);
+    clearLines();
+    $('choices').innerHTML = "";
+
+    // ✅每次切换节点，把对话区滚到顶部（干净），后续 addLine 会自动滚到底
+    const dlg = document.querySelector('.card.dialogue');
+    dlg.scrollTop = 0;
+
+    if (node.ending){
+      await wait(game.fast ? 0 : 160);
+      showOverlay(node.endTitle, node.endBody(), node.endNote);
+      return;
+    }
+
+    await playLines(node.lines || []);
+    renderChoices(node.choices || []);
+  }
+
+  async function onChoose(btn, choice){
+    if (isTyping) return;
+    lockOtherButtons(btn);
+    vibrate(18);
+    await wait(150);
+    await goto(choice.next);
+  }
+
+  // overlay continue
+  $('continueBtn').onclick = async () => {
+    const node = nodes[game.nodeId];
+    hideOverlay();
+    await wait(120);
+    if (node && node.nextAfterEnding){
+      await goto(node.nextAfterEnding);
+    }
+  };
+
+  // restart
+  $('restartBtn').onclick = async () => {
+    game.fast = false;
+    $('skipBtn').textContent = "快速跳过文字";
+    hideOverlay();
+    await goto("S1_START");
+  };
+
+  // skip typing
+  $('skipBtn').onclick = () => {
+    game.fast = !game.fast;
+    $('skipBtn').textContent = game.fast ? "恢复正常速度" : "快速跳过文字";
+
+    if (isTyping){
+      cancelToken.cancelled = true;
+      const cur = nodes[game.nodeId];
+      if (cur && !cur.ending){
+        setTimeout(() => goto(game.nodeId), 0);
+      }
+    }
+  };
+
+  // start
+  goto("S1_START");
+})();
+</script>
+</body>
+</html>
