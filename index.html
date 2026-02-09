@@ -1052,17 +1052,44 @@
   initLevel();
   updateHUD();
 
-  // 如果已到 100，直接显示字幕
-  if (state.index >= 100) {
-    endMode = true;
-    showCredits();
-  } else if (state.index > 0) {
-    showToast(state.index);
-    scheduleToastHide();
-  }
+ // 如果已到 100，直接显示字幕
+if (state.index >= 100) {
+  endMode = true;
+  showCredits();
 
-  requestAnimationFrame(loop);
-})();
+  setTimeout(() => {
+    if (document.getElementById("toChapter2Btn")) return;
+
+    const btn = document.createElement("a");
+    btn.id = "toChapter2Btn";
+    btn.href = "./chapter2.html";
+    btn.textContent = "进入 Chapter 2";
+    btn.style.cssText = `
+      position: fixed;
+      left: 50%;
+      bottom: max(18px, env(safe-area-inset-bottom));
+      transform: translateX(-50%);
+      z-index: 9999;
+      padding: 12px 16px;
+      border-radius: 14px;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 15px;
+      color: white;
+      background: rgba(125,211,252,.18);
+      border: 1px solid rgba(125,211,252,.35);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 10px 30px rgba(0,0,0,.35);
+    `;
+    document.body.appendChild(btn);
+  }, 300);
+
+} else if (state.index > 0) {
+  showToast(state.index);
+  scheduleToastHide();
+}
+
 </script>
 </body>
 </html>
+
