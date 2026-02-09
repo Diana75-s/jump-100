@@ -1,0 +1,817 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>跳到第100句 · Chapter 1</title>
+  <style>
+    :root{
+      --bg:#f6f7fb;
+      --ink:rgba(0,0,0,.85);
+      --muted:rgba(0,0,0,.55);
+      --card:rgba(255,255,255,.9);
+      --toast:rgba(255,255,255,.50);
+      --shadow:0 10px 30px rgba(0,0,0,.10);
+      --radius:18px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,"PingFang SC","Noto Sans SC","Microsoft YaHei",sans-serif;}
+    #app{position:relative;height:100%;width:100%;overflow:hidden}
+    canvas{width:100%;height:100%;display:block}
+
+    .hud{
+      position:absolute;left:12px;right:12px;top:12px;
+      display:flex;gap:10px;align-items:center;justify-content:space-between;
+      pointer-events:none;
+    }
+    .pill{
+      pointer-events:auto;display:flex;align-items:center;gap:10px;
+      background:var(--card);border-radius:999px;padding:10px 12px;
+      box-shadow:var(--shadow);backdrop-filter:blur(6px);
+    }
+    .pill .title{font-weight:650;color:var(--ink);font-size:13px}
+    .pill .sub{color:var(--muted);font-size:12px}
+    .btn{
+      pointer-events:auto;border:0;border-radius:999px;padding:10px 12px;
+      background:rgba(255,255,255,.95);box-shadow:var(--shadow);
+      color:var(--ink);font-weight:600;cursor:pointer;
+    }
+    .btn:active{transform:translateY(1px)}
+
+    #toast{
+      position:absolute;left:50%;transform:translateX(-50%);
+      bottom:72px;width:min(720px,calc(100% - 24px));
+      background:var(--toast);color:var(--ink);
+      border-radius:var(--radius);padding:12px 14px;
+      box-shadow:var(--shadow);backdrop-filter:blur(6px);
+      display:none;align-items:flex-start;gap:10px;
+    }
+    #toast .who{font-size:12px;font-weight:800;white-space:nowrap;opacity:.9}
+    #toast .msg{font-size:14px;line-height:1.35;word-break:break-word}
+    #toast .expand{
+      margin-left:auto;font-size:12px;color:rgba(0,0,0,.65);
+      background:rgba(255,255,255,.6);border:0;border-radius:999px;
+      padding:6px 10px;cursor:pointer;
+    }
+
+    #drawer{
+      position:absolute;left:50%;transform:translateX(-50%);
+      bottom:128px;width:min(720px,calc(100% - 24px));
+      background:rgba(255,255,255,.92);color:var(--ink);
+      border-radius:22px;padding:14px;box-shadow:var(--shadow);
+      display:none;backdrop-filter:blur(8px);
+    }
+    #drawer h3{margin:0 0 6px 0;font-size:14px}
+    #drawer .context{
+      font-size:13px;line-height:1.45;color:rgba(0,0,0,.78);
+      max-height:32vh;overflow:auto;padding-right:6px;
+    }
+    #drawer .close{margin-top:10px;display:flex;justify-content:flex-end}
+    #drawer .close button{
+      border:0;border-radius:999px;padding:8px 12px;
+      background:rgba(0,0,0,.06);cursor:pointer;font-weight:650;color:var(--ink);
+    }
+
+    #modalMask{
+      position:absolute;inset:0;background:rgba(0,0,0,.35);
+      display:none;align-items:center;justify-content:center;padding:16px;
+    }
+    #modal{
+      width:min(840px,100%);max-height:78vh;background:rgba(255,255,255,.95);
+      border-radius:24px;box-shadow:var(--shadow);overflow:hidden;
+      backdrop-filter:blur(10px);display:flex;flex-direction:column;
+    }
+    #modal header{
+      padding:14px 16px;display:flex;align-items:center;justify-content:space-between;
+      border-bottom:1px solid rgba(0,0,0,.06);
+    }
+    #modal header .left{display:flex;flex-direction:column;gap:2px}
+    #modal header .left .h{font-weight:800;color:var(--ink)}
+    #modal header .left .s{font-size:12px;color:var(--muted)}
+    #modal header button{
+      border:0;border-radius:999px;padding:8px 12px;
+      background:rgba(0,0,0,.06);cursor:pointer;font-weight:700;
+    }
+    #modal main{padding:12px 16px;overflow:auto}
+    .line{
+      padding:10px 12px;border-radius:16px;background:rgba(0,0,0,.03);
+      margin-bottom:10px;display:flex;gap:10px;align-items:flex-start;
+    }
+    .line .idx{font-size:12px;color:var(--muted);width:40px;flex:0 0 auto}
+    .line .who{font-weight:850;font-size:12px;width:110px;flex:0 0 auto}
+    .line .txt{font-size:13px;line-height:1.45;color:rgba(0,0,0,.82);flex:1 1 auto}
+
+    .hint{
+      position:absolute;left:50%;transform:translateX(-50%);
+      bottom:16px;width:min(720px,calc(100% - 24px));
+      display:flex;gap:10px;align-items:center;justify-content:space-between;
+      pointer-events:none;color:var(--muted);font-size:12px;
+    }
+    .kbd{
+      pointer-events:none;display:inline-flex;align-items:center;justify-content:center;
+      padding:2px 8px;border-radius:999px;background:rgba(255,255,255,.8);
+      box-shadow:0 6px 18px rgba(0,0,0,.06);color:rgba(0,0,0,.7);
+      font-weight:700;margin:0 4px;
+    }
+
+    /* ✅ Chapter 1 结束层 */
+    #endMask{
+      position:absolute;inset:0;display:none;align-items:center;justify-content:center;
+      background:rgba(0,0,0,.35);backdrop-filter:blur(6px);
+      padding:16px;z-index:50;
+    }
+    #endCard{
+      width:min(720px,100%);border-radius:26px;
+      background:rgba(255,255,255,.92);
+      box-shadow:var(--shadow);padding:18px 16px;
+      text-align:center;
+    }
+    #endCard .t{font-weight:900;font-size:18px;color:var(--ink);letter-spacing:.5px}
+    #endCard .s{margin-top:6px;font-size:13px;color:var(--muted);line-height:1.5}
+    #endCard .actions{margin-top:14px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+    #endCard .actions button{
+      border:0;border-radius:999px;padding:10px 14px;cursor:pointer;
+      font-weight:800;background:rgba(0,0,0,.06);color:var(--ink);
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+  <canvas id="c"></canvas>
+
+  <div class="hud">
+    <div class="pill">
+      <div>
+        <div class="title">跳到第100句 · Chapter 1</div>
+        <div class="sub"><span id="progressText">0/100</span> · 已解锁 <span id="unlockedText">0</span> 条</div>
+      </div>
+    </div>
+    <div style="display:flex; gap:10px; pointer-events:auto;">
+      <button class="btn" id="btnBook">📜 回忆册</button>
+      <button class="btn" id="btnReset">↺ 重置进度</button>
+    </div>
+  </div>
+
+  <div id="toast">
+    <div class="who" id="toastWho"></div>
+    <div class="msg" id="toastMsg"></div>
+    <button class="expand" id="toastExpand">展开</button>
+  </div>
+
+  <div id="drawer">
+    <h3 id="drawerTitle">回忆片段</h3>
+    <div class="context" id="drawerContext"></div>
+    <div class="close"><button id="drawerClose">收起</button></div>
+  </div>
+
+  <div id="modalMask">
+    <div id="modal">
+      <header>
+        <div class="left">
+          <div class="h">📜 回忆册</div>
+          <div class="s">已解锁的关卡会自动保存（本地保存）</div>
+        </div>
+        <button id="btnCloseModal">关闭</button>
+      </header>
+      <main id="modalList"></main>
+    </div>
+  </div>
+
+  <!-- ✅ 终章动画层 -->
+  <div id="endMask">
+    <div id="endCard">
+      <div class="t">Chapter 1 · 结束</div>
+      <div class="s">第 100 句已解锁。<br/>这一章，到这里就刚刚好。</div>
+      <div class="actions">
+        <button id="btnReplay">再跑一遍</button>
+        <button id="btnCloseEnd">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="hint">
+    <div class="k">操作：<span class="kbd">按住</span>蓄力，<span class="kbd">松开</span>起跳 · 失败不会清零</div>
+    <div class="k">小技巧：每跳一格都会弹出一条回忆 🙂</div>
+  </div>
+</div>
+
+<script>
+(() => {
+  /***********************
+   *  1) 100 条文本池（✅ 强制只用前 100 条）
+   ***********************/
+  const LINES_RAW = [
+    { who: "吃吃", text: "我通过了你的朋友验证请求" },
+    { who: "吃吃", text: "现在我们可以开始聊天了" },
+    { who: "吃吃", text: "养生版？" },
+    { who: "莫斯科的小矮人", text: "哇塞，你通过速度好快" },
+    { who: "吃吃", text: "快吗，都过了 6 分钟了" },
+    { who: "莫斯科的小矮人", text: "你微信回得比网易云快多了" },
+    { who: "吃吃", text: "因为我不看，在微信" },
+    { who: "吃吃", text: "试图" },
+    { who: "吃吃", text: "然后呢" },
+    { who: "吃吃", text: "具体是怎么样" },
+
+    { who: "莫斯科的小矮人", text: "等一下，我先看点东西" },
+    { who: "莫斯科的小矮人", text: "今天不上班？" },
+    { who: "吃吃", text: "上" },
+    { who: "吃吃", text: "明天早上就出发" },
+    { who: "吃吃", text: "去帕劳" },
+    { who: "莫斯科的小矮人", text: "执行力这么强" },
+    { who: "莫斯科的小矮人", text: "你休年假啦" },
+    { who: "吃吃", text: "没有" },
+    { who: "吃吃", text: "请去的，你可以这么理解" },
+    { who: "莫斯科的小矮人", text: "那也很厉害了" },
+
+    { who: "莫斯科的小矮人", text: "上海冷的下雪了" },
+    { who: "莫斯科的小矮人", text: "那边应该很暖和了" },
+    { who: "吃吃", text: "相对来说确实是" },
+    { who: "吃吃", text: "下雪了吗" },
+    { who: "吃吃", text: "那你得注意点" },
+    { who: "吃吃", text: "别感冒，冷到了" },
+    { who: "吃吃", text: "戴个耳包" },
+    { who: "吃吃", text: "天太冷容易生冻疮" },
+    { who: "吃吃", text: "手套也最好戴好" },
+    { who: "莫斯科的小矮人", text: "哈哈，我可牛了" },
+
+    { who: "莫斯科的小矮人", text: "我专门定制了一套羽绒服" },
+    { who: "莫斯科的小矮人", text: "300g 纯鹅绒" },
+    { who: "莫斯科的小矮人", text: "完全不冷" },
+    { who: "莫斯科的小矮人", text: "穿上去像隔绝世界" },
+    { who: "莫斯科的小矮人", text: "肉眼看就很厚" },
+    { who: "吃吃", text: "那确实是暖和过冬了" },
+    { who: "吃吃", text: "不冷就行" },
+    { who: "莫斯科的小矮人", text: "你咋喜欢用这些古早表情包" },
+    { who: "吃吃", text: "可能我是古早之人" },
+    { who: "吃吃", text: "我是旧时代的人" },
+
+    { who: "吃吃", text: "新时代没有能载动我的船" },
+    { who: "莫斯科的小矮人", text: "你还挺幽默的" },
+    { who: "莫斯科的小矮人", text: "明天去帕劳潜水？" },
+    { who: "莫斯科的小矮人", text: "我搜搜现在去那要准备什么" },
+    { who: "吃吃", text: "你竟然知道" },
+    { who: "吃吃", text: "需要时间" },
+    { who: "莫斯科的小矮人", text: "我过年才有时间出去玩" },
+    { who: "莫斯科的小矮人", text: "过年机票很贵" },
+    { who: "莫斯科的小矮人", text: "好像去帕劳都挺贵" },
+    { who: "莫斯科的小矮人", text: "落地签就行吧" },
+
+    { who: "吃吃", text: "老实待在家" },
+    { who: "吃吃", text: "前段时间回去过了" },
+    { who: "吃吃", text: "攻略？" },
+    { who: "吃吃", text: "真没啥攻略可言" },
+    { who: "莫斯科的小矮人", text: "潜水真好" },
+    { who: "莫斯科的小矮人", text: "玩得开心" },
+    { who: "莫斯科的小矮人", text: "注意安全" },
+    { who: "吃吃", text: "放心吧" },
+    { who: "吃吃", text: "我只是简单浮潜" },
+    { who: "吃吃", text: "也不是潜水" },
+
+    { who: "莫斯科的小矮人", text: "你经常去那玩吗" },
+    { who: "吃吃", text: "那没有" },
+    { who: "吃吃", text: "我是第一次" },
+    { who: "吃吃", text: "大姑娘上花轿头一次" },
+    { who: "莫斯科的小矮人", text: "那我可以给你点经验" },
+    { who: "吃吃", text: "什么经验" },
+    { who: "吃吃", text: "搞得像你去过一样" },
+    { who: "吃吃", text: "我来听听" },
+    { who: "莫斯科的小矮人", text: "我之前在仙本那浮潜过" },
+    { who: "莫斯科的小矮人", text: "防晒真的很重要" },
+
+    { who: "莫斯科的小矮人", text: "希望对你有点帮助" },
+    { who: "吃吃", text: "你怎么这么可爱" },
+    { who: "吃吃", text: "我去报了团" },
+    { who: "吃吃", text: "我还挺开心的" },
+    { who: "莫斯科的小矮人", text: "团里的一次性咬嘴" },
+    { who: "莫斯科的小矮人", text: "可以多备几个" },
+    { who: "莫斯科的小矮人", text: "容易丢" },
+    { who: "莫斯科的小矮人", text: "我得去忙了" },
+    { who: "吃吃", text: "去吧" },
+    { who: "吃吃", text: "我等你" },
+
+    { who: "莫斯科的小矮人", text: "估计要被开了" },
+    { who: "吃吃", text: "说啥呢" },
+    { who: "莫斯科的小矮人", text: "你不做点准备吗" },
+    { who: "吃吃", text: "该带的都收拾好了" },
+    { who: "莫斯科的小矮人", text: "那就好" },
+    { who: "吃吃", text: "缘分已尽就结束" },
+    { who: "吃吃", text: "不去旧的" },
+    { who: "吃吃", text: "哪来新的" },
+    { who: "吃吃", text: "不然怎么认识我" },
+    { who: "莫斯科的小矮人", text: "好" },
+
+    { who: "莫斯科的小矮人", text: "快去健身吧" },
+    { who: "吃吃", text: "你蛮有意思的" },
+    { who: "吃吃", text: "很开心认识你" },
+    { who: "吃吃", text: "叫我吃吃" },
+    { who: "莫斯科的小矮人", text: "备注吗" },
+    { who: "吃吃", text: "这是我小名" },
+    { who: "吃吃", text: "总不能每天都这么亲密" },
+    { who: "莫斯科的小矮人", text: "我懂" },
+    { who: "吃吃", text: "慢慢来" },
+    { who: "莫斯科的小矮人", text: "那就这样吧" },
+
+    /* ✅ 最后 8 条 */
+    { who: "莫斯科的小矮人", text: "这么亲密的吗我去" },
+    { who: "吃吃", text: "诶你这样吧" },
+    { who: "莫斯科的小矮人", text: "我叫丁红" },
+    { who: "吃吃", text: "啊?" },
+    { who: "莫斯科的小矮人", text: "我以为小名是家人叫的那种" },
+    { who: "莫斯科的小矮人", text: "不好意思" },
+    { who: "莫斯科的小矮人", text: "我们这边是只有家人才会喊小名" },
+    { who: "吃吃", text: "哈哈哈哈 不会啊" },
+  ];
+
+  const LINES = LINES_RAW.slice(0, 100);
+  if (LINES_RAW.length !== 100) console.warn("⚠️ LINES 原始条数：", LINES_RAW.length, "已截断为 100");
+  if (LINES.length !== 100) console.warn("⚠️ LINES 实际条数异常：", LINES.length);
+
+  /***********************
+   *  2) 本地存档
+   ***********************/
+  const STORE_KEY = "jump100_ch1_v1";
+  const defaultSave = () => ({ index: 0, unlocked: [], best: 0 });
+
+  const loadSave = () => {
+    try{
+      const raw = localStorage.getItem(STORE_KEY);
+      if (!raw) return defaultSave();
+      const s = JSON.parse(raw);
+      if (!s || typeof s.index !== "number") return defaultSave();
+
+      const unlocked = Array.isArray(s.unlocked) ? s.unlocked : [];
+      const unlockedClean = [...new Set(unlocked)]
+        .map(n => n|0)
+        .filter(n => n >= 1 && n <= 100);
+
+      return {
+        index: Math.max(0, Math.min(100, s.index|0)),
+        unlocked: unlockedClean,
+        best: typeof s.best === "number" ? Math.max(0, Math.min(100, s.best|0)) : 0
+      };
+    }catch(e){ return defaultSave(); }
+  };
+  let state = loadSave();
+  const saveState = () => localStorage.setItem(STORE_KEY, JSON.stringify(state));
+
+  /***********************
+   *  3) Canvas / 物理参数
+   ***********************/
+  const canvas = document.getElementById("c");
+  const ctx = canvas.getContext("2d");
+  const DPR = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+
+  function resize(){
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = Math.floor(rect.width * DPR);
+    canvas.height = Math.floor(rect.height * DPR);
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+  }
+  window.addEventListener("resize", resize);
+  resize();
+
+  const world = {
+    gravity: 2200,
+    groundY: () => canvas.getBoundingClientRect().height * 0.70,
+    camX: 0
+  };
+
+  const platform = { w: 150, h: 20, gapMin: 90, gapMax: 170, yJitter: 40 };
+
+
+  const player = {
+    x: 0, y: 0, r: 16,
+    vx: 0, vy: 0,
+    onGround: true,
+    charging: false,
+    charge: 0,
+    chargeStart: 0
+  };
+
+  let platforms = [];
+  function rand(a,b){ return a + Math.random()*(b-a); }
+  function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
+
+  function makeNextPlatform(prev){
+    const baseY = world.groundY();
+    const gap = rand(platform.gapMin, platform.gapMax);
+    const y = clamp(prev.y + rand(-platform.yJitter, platform.yJitter), baseY-120, baseY+80);
+    const w = rand(90, 150);
+    return { x: prev.x + prev.w + gap, y, w, h: platform.h };
+  }
+
+  /***********************
+   *  4) UI（✅ 先初始化 UI，再 initLevel，避免 toast TDZ）
+   ***********************/
+  const toast = document.getElementById("toast");
+  const toastWho = document.getElementById("toastWho");
+  const toastMsg = document.getElementById("toastMsg");
+  const toastExpand = document.getElementById("toastExpand");
+
+  const drawer = document.getElementById("drawer");
+  const drawerTitle = document.getElementById("drawerTitle");
+  const drawerContext = document.getElementById("drawerContext");
+  const drawerClose = document.getElementById("drawerClose");
+
+  const modalMask = document.getElementById("modalMask");
+  const modalList = document.getElementById("modalList");
+  const btnBook = document.getElementById("btnBook");
+  const btnReset = document.getElementById("btnReset");
+  const btnCloseModal = document.getElementById("btnCloseModal");
+
+  const progressText = document.getElementById("progressText");
+  const unlockedText = document.getElementById("unlockedText");
+
+  const endMask = document.getElementById("endMask");
+  const btnReplay = document.getElementById("btnReplay");
+  const btnCloseEnd = document.getElementById("btnCloseEnd");
+
+  let toastHideTimer = null;
+  let lastShownIdx = 0;
+
+  function updateHUD(){
+    progressText.textContent = `${state.index}/100`;
+    unlockedText.textContent = `${state.unlocked.length}`;
+  }
+
+  function showToast(idx){
+    if (idx < 1 || idx > 100) return;
+    const line = LINES[idx-1];
+    if (!line) return;
+    lastShownIdx = idx;
+    toastWho.textContent = line.who;
+    toastMsg.textContent = line.text;
+    toast.style.display = "flex";
+  }
+  function hideToast(){
+    toast.style.display = "none";
+    if (toastHideTimer) { clearTimeout(toastHideTimer); toastHideTimer = null; }
+  }
+  function scheduleToastHide(){
+    if (toastHideTimer) clearTimeout(toastHideTimer);
+    toastHideTimer = setTimeout(() => hideToast(), 2200);
+  }
+
+  function showDrawer(idx){
+    const line = LINES[idx-1];
+    if (!line) return;
+    drawerTitle.textContent = `第 ${idx} 句 · ${line.who}`;
+    drawerContext.textContent = line.text;
+    drawer.style.display = "block";
+  }
+  function hideDrawer(){ drawer.style.display = "none"; }
+
+  toastExpand.addEventListener("click", () => { if (lastShownIdx) showDrawer(lastShownIdx); });
+  drawerClose.addEventListener("click", hideDrawer);
+
+  function escapeHtml(s){
+    return String(s).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;").replaceAll("'","&#39;");
+  }
+
+  function renderBookList(){
+    modalList.innerHTML = "";
+    const unlockedSorted = [...new Set(state.unlocked)].sort((a,b)=>a-b);
+    if (unlockedSorted.length === 0) {
+      const div = document.createElement("div");
+      div.style.color = "rgba(0,0,0,.55)";
+      div.style.fontSize = "13px";
+      div.style.padding = "8px 2px";
+      div.textContent = "还没解锁任何回忆，去跳一跳 🙂";
+      modalList.appendChild(div);
+      return;
+    }
+    for (const idx of unlockedSorted) {
+      const line = LINES[idx-1];
+      if (!line) continue;
+      const row = document.createElement("div");
+      row.className = "line";
+      row.innerHTML = `
+        <div class="idx">#${idx}</div>
+        <div class="who">${escapeHtml(line.who)}</div>
+        <div class="txt">${escapeHtml(line.text)}</div>
+      `;
+      row.addEventListener("click", () => showDrawer(idx));
+      modalList.appendChild(row);
+    }
+  }
+
+  btnBook.addEventListener("click", () => { modalMask.style.display = "flex"; renderBookList(); });
+  btnCloseModal.addEventListener("click", () => { modalMask.style.display = "none"; });
+  modalMask.addEventListener("click", (e) => { if (e.target === modalMask) modalMask.style.display = "none"; });
+
+  /***********************
+   *  5) 关卡初始化（✅ 移到 UI 之后）
+   ***********************/
+  function initLevel(){
+    const baseY = world.groundY();
+    world.camX = 0;
+    platforms = [];
+    platforms.push({ x: 80, y: baseY, w: platform.w, h: platform.h });
+    platforms.push(makeNextPlatform(platforms[0]));
+    platforms.push(makeNextPlatform(platforms[1]));
+
+    const p0 = platforms[0];
+    player.x = p0.x + p0.w/2;
+    player.y = p0.y - player.r;
+    player.vx = 0; player.vy = 0;
+    player.onGround = true;
+    player.charging = false;
+    player.charge = 0;
+
+    hideToast();
+    hideDrawer();
+    updateHUD();
+  }
+
+  btnReset.addEventListener("click", () => {
+    state = defaultSave();
+    saveState();
+    endMode = false;
+    endMask.style.display = "none";
+    particles.length = 0;
+    initLevel();
+  });
+
+  btnReplay.addEventListener("click", () => {
+    state = defaultSave();
+    saveState();
+    endMode = false;
+    endMask.style.display = "none";
+    particles.length = 0;
+    initLevel();
+  });
+  btnCloseEnd.addEventListener("click", () => { endMask.style.display = "none"; });
+
+  /***********************
+   *  6) 交互：按住蓄力 / 松开跳（终章锁定）
+   ***********************/
+  let endMode = false;
+
+  function pointerDown(){
+    if (endMode) return;
+    if (!player.onGround) return;
+    player.charging = true;
+    player.chargeStart = performance.now();
+    player.charge = 0;
+  }
+  function pointerUp(){
+    if (endMode) return;
+    if (!player.charging) return;
+    player.charging = false;
+    const c = clamp(player.charge, 0, 1);
+    const baseSpeed = 520;
+    const extraSpeed = 820;
+    const jumpVy = -720;
+    player.vx = baseSpeed + extraSpeed * c;
+    player.vy = jumpVy - 120 * c;
+    player.onGround = false;
+    scheduleToastHide();
+  }
+
+  canvas.addEventListener("pointerdown", pointerDown);
+  window.addEventListener("pointerup", pointerUp);
+
+  /***********************
+   *  7) 终章粒子动画（第100句触发）
+   ***********************/
+  const particles = [];
+  function spawnFinale(){
+    const W = canvas.getBoundingClientRect().width;
+    const H = canvas.getBoundingClientRect().height;
+    const cx = W * 0.5, cy = H * 0.32;
+
+    for (let k=0;k<160;k++){
+      const a = Math.random()*Math.PI*2;
+      const sp = 120 + Math.random()*420;
+      particles.push({
+        x: cx, y: cy,
+        vx: Math.cos(a)*sp,
+        vy: Math.sin(a)*sp,
+        life: 0,
+        max: 0.9 + Math.random()*0.9,
+        r: 1.5 + Math.random()*2.5
+      });
+    }
+  }
+
+  function drawFinaleOverlay(){
+    const W = canvas.getBoundingClientRect().width;
+    const H = canvas.getBoundingClientRect().height;
+
+    ctx.save();
+    ctx.fillStyle = "rgba(0,0,0,0.10)";
+    ctx.fillRect(0,0,W,H);
+
+    ctx.fillStyle = "rgba(255,255,255,0.92)";
+    ctx.font = "800 28px -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("Chapter 1 · END", W/2, H*0.22);
+
+    ctx.fillStyle = "rgba(255,255,255,0.78)";
+    ctx.font = "600 13px -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif";
+    ctx.fillText("第 100 句解锁完成", W/2, H*0.22 + 22);
+    ctx.restore();
+  }
+
+  /***********************
+   *  8) 解锁：落地 -> index+1；index=100 触发终章
+   ***********************/
+  function unlockNext(){
+    if (state.index >= 100) return;
+
+    state.index += 1;
+    const idx = state.index;
+
+    if (!state.unlocked.includes(idx)) state.unlocked.push(idx);
+    state.best = Math.max(state.best, state.index);
+    saveState();
+    updateHUD();
+
+    showToast(idx);
+    scheduleToastHide();
+
+    const last = platforms[platforms.length - 1];
+    platforms.push(makeNextPlatform(last));
+
+    if (idx === 100) {
+      endMode = true;
+      player.charging = false;
+      player.vx = 0; player.vy = 0;
+      spawnFinale();
+      endMask.style.display = "flex";
+    }
+  }
+
+  /***********************
+   *  9) 物理更新 + 碰撞
+   ***********************/
+  function respawnOnLastPlatform(){
+    const cand = platforms.filter(p => p.x + p.w/2 <= player.x).sort((a,b)=> (a.x+a.w)-(b.x+b.w));
+    const p = cand.length ? cand[cand.length-1] : platforms[0];
+    player.x = p.x + p.w/2;
+    player.y = p.y - player.r;
+    player.vx = 0; player.vy = 0;
+    player.onGround = true;
+    player.charging = false;
+    player.charge = 0;
+    hideToast();
+  }
+
+  function step(dt){
+    if (!endMode && player.charging) {
+      const t = (performance.now() - player.chargeStart) / 1200;
+
+      player.charge = clamp(t, 0, 1);
+    }
+
+    if (!endMode) {
+      if (!player.onGround) {
+        player.vy += world.gravity * dt;
+        player.x += player.vx * dt;
+        player.y += player.vy * dt;
+      } else {
+        player.vx *= 0.98;
+      }
+
+      const viewW = canvas.getBoundingClientRect().width;
+      const targetCam = player.x - viewW * 0.35;
+      world.camX = Math.max(0, targetCam);
+
+      if (!player.onGround) {
+        for (const p of platforms) {
+          const px1 = p.x, px2 = p.x + p.w;
+          const py = p.y;
+          const withinX = (player.x > px1 - player.r*1.6) && (player.x < px2 + player.r*1.6);
+
+          const falling = player.vy > 0;
+          const footY = player.y + player.r;
+
+          if (withinX && falling && footY >= py - 6 && footY <= py + 22) {
+            player.x = clamp(player.x, px1 + player.r*0.6, px2 - player.r*0.6);
+	    player.y = py - player.r;
+            player.x = clamp(player.x, px1 + player.r*0.6, px2 - player.r*0.6);
+
+            player.vy = 0;
+            player.onGround = true;
+            unlockNext();
+            break;
+          }
+        }
+
+        const H = canvas.getBoundingClientRect().height;
+        if (player.y > H + 240) respawnOnLastPlatform();
+      }
+    } else {
+      for (let i=particles.length-1;i>=0;i--){
+        const p = particles[i];
+        p.life += dt;
+        p.vy += 820 * dt;
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        p.vx *= (1 - 0.8*dt);
+        p.vy *= (1 - 0.2*dt);
+        if (p.life >= p.max) particles.splice(i,1);
+      }
+    }
+  }
+
+  /***********************
+   *  10) 绘制
+   ***********************/
+  function roundRect(ctx, x,y,w,h,r){
+    const rr = Math.min(r, w/2, h/2);
+    ctx.beginPath();
+    ctx.moveTo(x+rr,y);
+    ctx.arcTo(x+w,y, x+w,y+h, rr);
+    ctx.arcTo(x+w,y+h, x,y+h, rr);
+    ctx.arcTo(x,y+h, x,y, rr);
+    ctx.arcTo(x,y, x+w,y, rr);
+    ctx.closePath();
+  }
+
+  function draw(){
+    const W = canvas.getBoundingClientRect().width;
+    const H = canvas.getBoundingClientRect().height;
+    ctx.clearRect(0,0,W,H);
+
+    const g = ctx.createLinearGradient(0,0,0,H);
+    g.addColorStop(0,"rgba(0,0,0,0.02)");
+    g.addColorStop(1,"rgba(0,0,0,0)");
+    ctx.fillStyle = g;
+    ctx.fillRect(0,0,W,H);
+
+    for (const p of platforms) {
+      const sx = p.x - world.camX;
+      const sy = p.y;
+      if (sx < -260 || sx > W + 260) continue;
+
+      ctx.fillStyle = "rgba(0,0,0,0.10)";
+      roundRect(ctx, sx, sy+3, p.w, p.h, 10);
+      ctx.fill();
+
+      ctx.fillStyle = "rgba(255,255,255,0.95)";
+      roundRect(ctx, sx, sy, p.w, p.h, 10);
+      ctx.fill();
+    }
+
+    const px = player.x - world.camX;
+    const py = player.y;
+
+    if (!endMode && player.charging) {
+      const t = clamp(player.charge, 0, 1);
+      ctx.beginPath();
+      ctx.arc(px, py, player.r + 12 + 10*t, 0, Math.PI*2);
+      ctx.strokeStyle = "rgba(0,0,0,0.10)";
+      ctx.lineWidth = 4;
+      ctx.stroke();
+    }
+
+    ctx.beginPath();
+    ctx.arc(px, py, player.r, 0, Math.PI*2);
+    ctx.fillStyle = "rgba(0,0,0,0.78)";
+    ctx.fill();
+
+    if (endMode) {
+      for (const p of particles) {
+        const alpha = Math.max(0, 1 - (p.life / p.max));
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+        ctx.fillStyle = `rgba(255,255,255,${0.85*alpha})`;
+        ctx.fill();
+      }
+      drawFinaleOverlay();
+    }
+  }
+
+  /***********************
+   *  11) 主循环
+   ***********************/
+  let lastT = performance.now();
+  function loop(t){
+    const dt = Math.min(0.033, (t - lastT)/1000);
+    lastT = t;
+    step(dt);
+    draw();
+    requestAnimationFrame(loop);
+  }
+
+  // ✅ 初始化：放在所有函数/UI/变量定义之后
+  initLevel();
+  updateHUD();
+
+  if (state.index > 0) {
+    showToast(state.index);
+    scheduleToastHide();
+    if (state.index >= 100) {
+      endMode = true;
+      endMask.style.display = "flex";
+      spawnFinale();
+    }
+  }
+
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
