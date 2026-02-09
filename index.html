@@ -114,7 +114,6 @@
       font-weight:700;margin:0 4px;
     }
 
-    /* ✅ Chapter 1 结束层 */
     #endMask{
       position:absolute;inset:0;display:none;align-items:center;justify-content:center;
       background:rgba(0,0,0,.35);backdrop-filter:blur(6px);
@@ -132,6 +131,53 @@
     #endCard .actions button{
       border:0;border-radius:999px;padding:10px 14px;cursor:pointer;
       font-weight:800;background:rgba(0,0,0,.06);color:var(--ink);
+    }
+
+    #chargeWrap{
+      position:absolute;left:50%;transform:translateX(-50%);
+      bottom:48px;width:min(520px,calc(100% - 64px));
+      display:none;align-items:center;gap:10px;
+      pointer-events:none;z-index:30;
+    }
+    #chargeWrap .label{
+      font-size:12px;color:rgba(0,0,0,.55);font-weight:800;
+      background:rgba(255,255,255,.80);
+      border-radius:999px;padding:6px 10px;box-shadow:0 6px 18px rgba(0,0,0,.06);
+      backdrop-filter:blur(6px);
+      white-space:nowrap;
+    }
+    #chargeWrap .bar{
+      flex:1 1 auto;height:10px;border-radius:999px;overflow:hidden;
+      background:rgba(0,0,0,.10);
+      box-shadow:0 6px 18px rgba(0,0,0,.06);
+      backdrop-filter:blur(6px);
+    }
+    #chargeWrap .bar > i{
+      display:block;height:100%;width:0%;
+      background:rgba(0,0,0,.70);
+      border-radius:999px;
+    }
+
+    #failMask{
+      position:absolute;inset:0;display:none;align-items:center;justify-content:center;
+      background:rgba(0,0,0,.35);backdrop-filter:blur(6px);
+      padding:16px;z-index:60;
+    }
+    #failCard{
+      width:min(640px,100%);border-radius:26px;
+      background:rgba(255,255,255,.92);
+      box-shadow:var(--shadow);padding:18px 16px;
+      text-align:center;
+    }
+    #failCard .t{font-weight:900;font-size:18px;color:var(--ink);letter-spacing:.5px}
+    #failCard .s{margin-top:6px;font-size:13px;color:var(--muted);line-height:1.5}
+    #failCard .actions{margin-top:14px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+    #failCard .actions button{
+      border:0;border-radius:999px;padding:10px 16px;cursor:pointer;
+      font-weight:900;background:rgba(0,0,0,.06);color:var(--ink);
+    }
+    #failCard .actions button.primary{
+      background:rgba(0,0,0,.82);color:#fff;
     }
   </style>
 </head>
@@ -177,7 +223,12 @@
     </div>
   </div>
 
-  <!-- ✅ 终章动画层 -->
+  <div id="chargeWrap">
+    <div class="label">蓄力</div>
+    <div class="bar"><i id="chargeFill"></i></div>
+    <div class="label" id="chargePct">0%</div>
+  </div>
+
   <div id="endMask">
     <div id="endCard">
       <div class="t">Chapter 1 · 结束</div>
@@ -189,17 +240,25 @@
     </div>
   </div>
 
+  <div id="failMask">
+    <div id="failCard">
+      <div class="t">失败</div>
+      <div class="s">掉下去了…<br/>是否重置？</div>
+      <div class="actions">
+        <button class="primary" id="btnFailYes">是（重置进度）</button>
+        <button id="btnFailNo">否（继续）</button>
+      </div>
+    </div>
+  </div>
+
   <div class="hint">
-    <div class="k">操作：<span class="kbd">按住</span>蓄力，<span class="kbd">松开</span>起跳 · 失败不会清零</div>
+    <div class="k">操作：<span class="kbd">按住</span>蓄力，<span class="kbd">松开</span>起跳 · 失败会弹窗</div>
     <div class="k">小技巧：每跳一格都会弹出一条回忆 🙂</div>
   </div>
 </div>
 
 <script>
 (() => {
-  /***********************
-   *  1) 100 条文本池（✅ 强制只用前 100 条）
-   ***********************/
   const LINES_RAW = [
     { who: "吃吃", text: "我通过了你的朋友验证请求" },
     { who: "吃吃", text: "现在我们可以开始聊天了" },
@@ -207,14 +266,11 @@
     { who: "莫斯科的小矮人", text: "哇塞，你通过速度好快" },
     { who: "吃吃", text: "快吗，都过了 6 分钟了" },
     { who: "莫斯科的小矮人", text: "你微信回得比网易云快多了" },
-    { who: "吃吃", text: "因为我不看，在微信" },
-    { who: "吃吃", text: "试图" },
-    { who: "吃吃", text: "然后呢" },
-    { who: "吃吃", text: "具体是怎么样" },
-
+    { who: "吃吃", text: "因为我不看那个" },
     { who: "莫斯科的小矮人", text: "等一下，我先看点东西" },
     { who: "莫斯科的小矮人", text: "今天不上班？" },
     { who: "吃吃", text: "上" },
+
     { who: "吃吃", text: "明天早上就出发" },
     { who: "吃吃", text: "去帕劳" },
     { who: "莫斯科的小矮人", text: "执行力这么强" },
@@ -306,29 +362,23 @@
     { who: "吃吃", text: "叫我吃吃" },
     { who: "莫斯科的小矮人", text: "备注吗" },
     { who: "吃吃", text: "这是我小名" },
-    { who: "吃吃", text: "总不能每天都这么亲密" },
-    { who: "莫斯科的小矮人", text: "我懂" },
-    { who: "吃吃", text: "慢慢来" },
-    { who: "莫斯科的小矮人", text: "那就这样吧" },
-
-    /* ✅ 最后 8 条 */
-    { who: "莫斯科的小矮人", text: "这么亲密的吗我去" },
-    { who: "吃吃", text: "诶你这样吧" },
+    { who: "吃吃", text: "总不能 每天就诶 你 这种吧" },
     { who: "莫斯科的小矮人", text: "我叫丁红" },
-    { who: "吃吃", text: "啊?" },
+    { who: "莫斯科的小矮人", text: "这么暧昧的吗" },
+    { who: "莫斯科的小矮人", text: "阿？" },
+
     { who: "莫斯科的小矮人", text: "我以为小名是家人叫的那种" },
-    { who: "莫斯科的小矮人", text: "不好意思" },
-    { who: "莫斯科的小矮人", text: "我们这边是只有家人才会喊小名" },
-    { who: "吃吃", text: "哈哈哈哈 不会啊" },
+    { who: "吃吃", text: "哈哈哈哈 不会啊小名而已,又不是什么比较隐私的称呼" },
+    { who: "吃吃", text: "当然 你要愿意叫 我也可以试一下" },
+    { who: "莫斯科的小矮人", text: "下班啦 上海真的快冷死了" },
+    { who: "吃吃", text: "哈哈哈哈 你别着凉" },
+    { who: "吃吃", text: "（发来一张健身照片）" },
+    { who: "莫斯科的小矮人", text: "我看看 是硬拉吗，好牛逼，我好久都没去过健身房了" },
+    { who: "吃吃", text: "我是常客，但工作日不会太久，因为一会人就多了" },
   ];
 
   const LINES = LINES_RAW.slice(0, 100);
-  if (LINES_RAW.length !== 100) console.warn("⚠️ LINES 原始条数：", LINES_RAW.length, "已截断为 100");
-  if (LINES.length !== 100) console.warn("⚠️ LINES 实际条数异常：", LINES.length);
 
-  /***********************
-   *  2) 本地存档
-   ***********************/
   const STORE_KEY = "jump100_ch1_v1";
   const defaultSave = () => ({ index: 0, unlocked: [], best: 0 });
 
@@ -354,9 +404,6 @@
   let state = loadSave();
   const saveState = () => localStorage.setItem(STORE_KEY, JSON.stringify(state));
 
-  /***********************
-   *  3) Canvas / 物理参数
-   ***********************/
   const canvas = document.getElementById("c");
   const ctx = canvas.getContext("2d");
   const DPR = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
@@ -376,8 +423,7 @@
     camX: 0
   };
 
-  const platform = { w: 150, h: 20, gapMin: 90, gapMax: 170, yJitter: 40 };
-
+  const platform = { w: 120, h: 18, gapMin: 110, gapMax: 220, yJitter: 70 };
 
   const player = {
     x: 0, y: 0, r: 16,
@@ -400,9 +446,6 @@
     return { x: prev.x + prev.w + gap, y, w, h: platform.h };
   }
 
-  /***********************
-   *  4) UI（✅ 先初始化 UI，再 initLevel，避免 toast TDZ）
-   ***********************/
   const toast = document.getElementById("toast");
   const toastWho = document.getElementById("toastWho");
   const toastMsg = document.getElementById("toastMsg");
@@ -425,6 +468,14 @@
   const endMask = document.getElementById("endMask");
   const btnReplay = document.getElementById("btnReplay");
   const btnCloseEnd = document.getElementById("btnCloseEnd");
+
+  const chargeWrap = document.getElementById("chargeWrap");
+  const chargeFill = document.getElementById("chargeFill");
+  const chargePct  = document.getElementById("chargePct");
+
+  const failMask = document.getElementById("failMask");
+  const btnFailYes = document.getElementById("btnFailYes");
+  const btnFailNo  = document.getElementById("btnFailNo");
 
   let toastHideTimer = null;
   let lastShownIdx = 0;
@@ -500,9 +551,6 @@
   btnCloseModal.addEventListener("click", () => { modalMask.style.display = "none"; });
   modalMask.addEventListener("click", (e) => { if (e.target === modalMask) modalMask.style.display = "none"; });
 
-  /***********************
-   *  5) 关卡初始化（✅ 移到 UI 之后）
-   ***********************/
   function initLevel(){
     const baseY = world.groundY();
     world.camX = 0;
@@ -524,45 +572,48 @@
     updateHUD();
   }
 
-  btnReset.addEventListener("click", () => {
-    state = defaultSave();
-    saveState();
-    endMode = false;
-    endMask.style.display = "none";
-    particles.length = 0;
-    initLevel();
-  });
-
-  btnReplay.addEventListener("click", () => {
-    state = defaultSave();
-    saveState();
-    endMode = false;
-    endMask.style.display = "none";
-    particles.length = 0;
-    initLevel();
-  });
-  btnCloseEnd.addEventListener("click", () => { endMask.style.display = "none"; });
-
-  /***********************
-   *  6) 交互：按住蓄力 / 松开跳（终章锁定）
-   ***********************/
   let endMode = false;
+  let failMode = false;
+
+  const MIN_HOLD = 80;
+  const MAX_HOLD = 1500;
+
+  function setChargeUI(c){
+    const pct = Math.round(c * 100);
+    chargeFill.style.width = `${pct}%`;
+    chargePct.textContent = `${pct}%`;
+  }
 
   function pointerDown(){
-    if (endMode) return;
+    if (endMode || failMode) return;
     if (!player.onGround) return;
     player.charging = true;
     player.chargeStart = performance.now();
     player.charge = 0;
+    chargeWrap.style.display = "flex";
+    setChargeUI(0);
   }
+
   function pointerUp(){
-    if (endMode) return;
+    if (endMode || failMode) return;
     if (!player.charging) return;
     player.charging = false;
+    chargeWrap.style.display = "none";
+
     const c = clamp(player.charge, 0, 1);
-    const baseSpeed = 520;
-    const extraSpeed = 820;
-    const jumpVy = -720;
+
+    if (c === 0) {
+      player.vx = 140;
+      player.vy = -520;
+      player.onGround = false;
+      scheduleToastHide();
+      return;
+    }
+
+    const baseSpeed = 180;
+    const extraSpeed = 520;
+    const jumpVy = -620;
+
     player.vx = baseSpeed + extraSpeed * c;
     player.vy = jumpVy - 120 * c;
     player.onGround = false;
@@ -572,9 +623,6 @@
   canvas.addEventListener("pointerdown", pointerDown);
   window.addEventListener("pointerup", pointerUp);
 
-  /***********************
-   *  7) 终章粒子动画（第100句触发）
-   ***********************/
   const particles = [];
   function spawnFinale(){
     const W = canvas.getBoundingClientRect().width;
@@ -614,9 +662,6 @@
     ctx.restore();
   }
 
-  /***********************
-   *  8) 解锁：落地 -> index+1；index=100 触发终章
-   ***********************/
   function unlockNext(){
     if (state.index >= 100) return;
 
@@ -636,36 +681,72 @@
 
     if (idx === 100) {
       endMode = true;
+      failMode = false;
       player.charging = false;
       player.vx = 0; player.vy = 0;
+      chargeWrap.style.display = "none";
       spawnFinale();
       endMask.style.display = "flex";
     }
   }
 
-  /***********************
-   *  9) 物理更新 + 碰撞
-   ***********************/
   function respawnOnLastPlatform(){
-    const cand = platforms.filter(p => p.x + p.w/2 <= player.x).sort((a,b)=> (a.x+a.w)-(b.x+b.w));
+    const cand = platforms
+      .filter(p => p.x + p.w/2 <= player.x)
+      .sort((a,b)=> (a.x+a.w)-(b.x+b.w));
     const p = cand.length ? cand[cand.length-1] : platforms[0];
+
     player.x = p.x + p.w/2;
     player.y = p.y - player.r;
     player.vx = 0; player.vy = 0;
     player.onGround = true;
     player.charging = false;
     player.charge = 0;
+
+    chargeWrap.style.display = "none";
     hideToast();
+    hideDrawer();
   }
 
-  function step(dt){
-    if (!endMode && player.charging) {
-      const t = (performance.now() - player.chargeStart) / 1200;
+  function triggerFail(){
+    if (endMode || failMode) return;
+    failMode = true;
 
+    player.charging = false;
+    player.vx = 0; player.vy = 0;
+    chargeWrap.style.display = "none";
+    hideToast();
+    hideDrawer();
+
+    failMask.style.display = "flex";
+  }
+
+  btnFailYes.addEventListener("click", () => {
+    state = defaultSave();
+    saveState();
+    failMode = false;
+    failMask.style.display = "none";
+    endMode = false;
+    endMask.style.display = "none";
+    particles.length = 0;
+    initLevel();
+  });
+
+  btnFailNo.addEventListener("click", () => {
+    failMode = false;
+    failMask.style.display = "none";
+    respawnOnLastPlatform();
+  });
+
+  function step(dt){
+    if (!endMode && !failMode && player.charging) {
+      const holdMs = performance.now() - player.chargeStart;
+      const t = (holdMs - MIN_HOLD) / (MAX_HOLD - MIN_HOLD);
       player.charge = clamp(t, 0, 1);
+      setChargeUI(player.charge);
     }
 
-    if (!endMode) {
+    if (!endMode && !failMode) {
       if (!player.onGround) {
         player.vy += world.gravity * dt;
         player.x += player.vx * dt;
@@ -682,16 +763,12 @@
         for (const p of platforms) {
           const px1 = p.x, px2 = p.x + p.w;
           const py = p.y;
-          const withinX = (player.x > px1 - player.r*1.6) && (player.x < px2 + player.r*1.6);
-
+          const withinX = (player.x > px1 - player.r) && (player.x < px2 + player.r);
           const falling = player.vy > 0;
           const footY = player.y + player.r;
 
           if (withinX && falling && footY >= py - 6 && footY <= py + 22) {
-            player.x = clamp(player.x, px1 + player.r*0.6, px2 - player.r*0.6);
-	    player.y = py - player.r;
-            player.x = clamp(player.x, px1 + player.r*0.6, px2 - player.r*0.6);
-
+            player.y = py - player.r;
             player.vy = 0;
             player.onGround = true;
             unlockNext();
@@ -700,9 +777,9 @@
         }
 
         const H = canvas.getBoundingClientRect().height;
-        if (player.y > H + 240) respawnOnLastPlatform();
+        if (player.y > H + 240) triggerFail();
       }
-    } else {
+    } else if (endMode) {
       for (let i=particles.length-1;i>=0;i--){
         const p = particles[i];
         p.life += dt;
@@ -716,9 +793,6 @@
     }
   }
 
-  /***********************
-   *  10) 绘制
-   ***********************/
   function roundRect(ctx, x,y,w,h,r){
     const rr = Math.min(r, w/2, h/2);
     ctx.beginPath();
@@ -758,7 +832,7 @@
     const px = player.x - world.camX;
     const py = player.y;
 
-    if (!endMode && player.charging) {
+    if (!endMode && !failMode && player.charging) {
       const t = clamp(player.charge, 0, 1);
       ctx.beginPath();
       ctx.arc(px, py, player.r + 12 + 10*t, 0, Math.PI*2);
@@ -784,9 +858,6 @@
     }
   }
 
-  /***********************
-   *  11) 主循环
-   ***********************/
   let lastT = performance.now();
   function loop(t){
     const dt = Math.min(0.033, (t - lastT)/1000);
@@ -796,20 +867,32 @@
     requestAnimationFrame(loop);
   }
 
-  // ✅ 初始化：放在所有函数/UI/变量定义之后
+  btnReset.addEventListener("click", () => {
+    state = defaultSave();
+    saveState();
+    failMode = false;
+    failMask.style.display = "none";
+    endMode = false;
+    endMask.style.display = "none";
+    particles.length = 0;
+    initLevel();
+  });
+
+  btnReplay.addEventListener("click", () => {
+    state = defaultSave();
+    saveState();
+    failMode = false;
+    failMask.style.display = "none";
+    endMode = false;
+    endMask.style.display = "none";
+    particles.length = 0;
+    initLevel();
+  });
+
+  btnCloseEnd.addEventListener("click", () => { endMask.style.display = "none"; });
+
   initLevel();
   updateHUD();
-
-  if (state.index > 0) {
-    showToast(state.index);
-    scheduleToastHide();
-    if (state.index >= 100) {
-      endMode = true;
-      endMask.style.display = "flex";
-      spawnFinale();
-    }
-  }
-
   requestAnimationFrame(loop);
 })();
 </script>
