@@ -321,16 +321,24 @@
   <!-- ✅ 结尾滚动字幕 -->
   <div id="creditsMask">
     <div id="creditsTopBar">
-  <div class="title">Chapter 1 · 写给你的话</div>
-  <div style="display:flex;gap:10px; align-items:center;">
-    <a class="btn small" id="btnToChapter2" href="./chapter2.html"
-       style="text-decoration:none; display:inline-flex; align-items:center;">
-      进入 Chapter 2
-    </a>
-    <button class="btn small" id="btnCreditsReplay">再跑一遍</button>
-    <button class="btn small" id="btnCreditsClose">关闭</button>
+      <div class="title">Chapter 1 · 写给你的话</div>
+      <div style="display:flex;gap:10px; align-items:center;">
+        <a class="btn small" id="btnToChapter2" href="./chapter2.html"
+           style="text-decoration:none; display:inline-flex; align-items:center;">
+          进入 Chapter 2
+        </a>
+        <button class="btn small" id="btnCreditsReplay">再跑一遍</button>
+        <button class="btn small" id="btnCreditsClose">关闭</button>
+      </div>
+    </div>
+
+    <div id="creditsInner">
+      <div class="h">Chapter 1 · END</div>
+      <div class="p" id="creditsText"></div>
+      <div class="sig">—— 发送自：跳到第100句</div>
+    </div>
   </div>
-</div>
+
 
   <div class="hint">
     <div class="k">操作：<span class="kbd">按住</span>蓄力，<span class="kbd">松开</span>起跳 · 失败会弹窗</div>
@@ -1056,33 +1064,7 @@
     endMode = true;
     showCredits();
 
-    // ✅ 显示进入 Chapter2 按钮（避免重复创建）
-    setTimeout(() => {
-      if (document.getElementById("toChapter2Btn")) return;
-
-      const btn = document.createElement("a");
-      btn.id = "toChapter2Btn";
-      btn.href = "./chapter2.html";
-      btn.textContent = "进入 Chapter 2";
-      btn.style.cssText = `
-        position: fixed;
-        left: 50%;
-        bottom: max(18px, env(safe-area-inset-bottom));
-        transform: translateX(-50%);
-        z-index: 9999;
-        padding: 12px 16px;
-        border-radius: 14px;
-        text-decoration: none;
-        font-weight: 700;
-        font-size: 15px;
-        color: white;
-        background: rgba(125,211,252,.18);
-        border: 1px solid rgba(125,211,252,.35);
-        backdrop-filter: blur(10px);
-        box-shadow: 0 10px 30px rgba(0,0,0,.35);
-      `;
-      document.body.appendChild(btn);
-    }, 300);
+    
 
   } else if (state.index > 0) {
     showToast(state.index);
@@ -1096,6 +1078,7 @@
 </script>
 </body>
 </html>
+
 
 
 
