@@ -267,12 +267,20 @@
         <div class="sub"><span id="progressText">0/100</span> · 已解锁 <span id="unlockedText">0</span> 条</div>
       </div>
     </div>
-    <div style="display:flex; gap:10px; pointer-events:auto; flex-wrap:wrap; justify-content:flex-end;">
-      <button class="btn small" id="btnMusic">🔈 音乐：关</button>
-      <button class="btn" id="btnBook">📜 回忆册</button>
-      <button class="btn" id="btnReset">↺ 重置进度</button>
-    </div>
-  </div>
+    <div style="display:flex; gap:10px; pointer-events:auto; flex-wrap:wrap; justify-content:flex-end; align-items:center;">
+  <button class="btn small" id="btnMusic">🔈 音乐：关</button>
+  <button class="btn" id="btnBook">📜 回忆册</button>
+
+  <!-- ✅ 常驻入口：Chapter 2 -->
+ <a class="btn" id="btnGoCh2" href="./chapter2.html"
+   style="text-decoration:none; display:inline-flex; align-items:center; font-weight:900; border:1px solid rgba(0,0,0,.10);">
+  🎮 Chapter 2
+</a>
+
+
+  <button class="btn" id="btnReset">↺ 重置进度</button>
+</div>
+
 
   <div id="toast">
     <div class="who" id="toastWho"></div>
@@ -1078,6 +1086,7 @@
 </script>
 </body>
 </html>
+
 
 
 
