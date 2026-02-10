@@ -30,7 +30,6 @@
       overflow:hidden;
     }
 
-    /* phone frame */
     .wrap{height:100%;display:flex;align-items:center;justify-content:center;padding:18px}
     .phone{
       width:min(420px, 100%);
@@ -49,7 +48,7 @@
       display:flex;
       flex-direction:column;
       gap:12px;
-      min-height:0; /* ✅关键：允许内部 flex 正确收缩 */
+      min-height:0;
     }
 
     .topbar{
@@ -57,6 +56,7 @@
       font-size:12px; color:var(--muted2);
       letter-spacing:.2px;
       flex:0 0 auto;
+      gap:10px;
     }
     .pill{
       background:rgba(255,255,255,.08);
@@ -64,27 +64,41 @@
       padding:8px 10px;
       border-radius:999px;
       display:inline-flex; gap:8px; align-items:center;
+      white-space:nowrap;
     }
     .dot{width:6px;height:6px;border-radius:50%;background:var(--accent); box-shadow:0 0 18px rgba(125,211,252,.6)}
 
-    /* ✅ stage 必须能分配高度 */
+    /* ✅ 右上角小按钮（音乐开关） */
+    .pillBtn{
+      border:1px solid rgba(255,255,255,.10);
+      background:rgba(255,255,255,.06);
+      color:rgba(255,255,255,.80);
+      border-radius:999px;
+      padding:8px 10px;
+      cursor:pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: transform 120ms ease, background 200ms ease, opacity 200ms ease;
+      display:inline-flex; align-items:center; gap:8px;
+      font-size:12px;
+    }
+    .pillBtn:hover{background:rgba(255,255,255,.10)}
+    .pillBtn:active{transform: translateY(1px)}
+    .pillBtn .ic{opacity:.9}
+
     .stage{
       flex:1 1 auto;
-      min-height:0;             /* ✅关键 */
+      min-height:0;
       display:flex;
       flex-direction:column;
       gap:12px;
       position:relative;
     }
 
-    /* scene header */
     .header{
       display:flex; align-items:flex-end; justify-content:space-between; gap:10px;
       flex:0 0 auto;
     }
-    .title{
-      font-size:18px; font-weight:700; letter-spacing:.2px;
-    }
+    .title{font-size:18px; font-weight:700; letter-spacing:.2px}
     .subtitle{font-size:12px;color:var(--muted2)}
     .progress{
       height:8px; width:120px; border-radius:999px;
@@ -98,7 +112,6 @@
       transition: width 600ms ease;
     }
 
-    /* cards */
     .card{
       background:var(--card);
       border:1px solid rgba(255,255,255,.10);
@@ -107,16 +120,15 @@
       box-shadow: 0 10px 30px rgba(0,0,0,.25);
     }
 
-    /* ✅ 对话区域：占据剩余空间并可滚动 */
     .card.dialogue{
       flex:1 1 auto;
-      min-height:0;                 /* ✅关键 */
-      overflow:auto;                /* ✅允许滚动 */
+      min-height:0;
+      overflow:auto;
       -webkit-overflow-scrolling: touch;
     }
     .lines{
       display:flex; flex-direction:column; gap:8px;
-      min-height:0;                 /* ✅关键 */
+      min-height:0;
       padding-bottom:6px;
     }
 
@@ -134,7 +146,6 @@
     .line.sys{color:var(--muted2); font-size:13px}
     .line.em{color:var(--accent); font-weight:650}
 
-    /* choices */
     .choices{display:grid; gap:10px}
     .btn{
       width:100%;
@@ -176,7 +187,6 @@
     }
     .btn:hover::after{opacity:1}
 
-    /* overlays for endings */
     .overlay{
       position:absolute; inset:0;
       display:flex; align-items:center; justify-content:center;
@@ -206,7 +216,6 @@
     .panelBody{padding:14px 14px}
     .small{font-size:12px;color:var(--muted2)}
 
-    /* chat mock */
     .chat{
       background:rgba(255,255,255,.06);
       border:1px solid rgba(255,255,255,.10);
@@ -243,7 +252,6 @@
       box-shadow:0 0 18px rgba(255,77,79,.45);
     }
 
-    /* call mock */
     .call{
       display:flex; flex-direction:column; align-items:center; justify-content:center;
       gap:12px; padding:18px;
@@ -266,9 +274,7 @@
       background:var(--ok);
       box-shadow:0 0 18px rgba(52,211,153,.55);
     }
-    .shake{
-      animation: shake 420ms ease;
-    }
+    .shake{ animation: shake 420ms ease; }
     @keyframes shake{
       0%,100%{transform:translateX(0)}
       20%{transform:translateX(-6px)}
@@ -277,7 +283,6 @@
       80%{transform:translateX(4px)}
     }
 
-    /* footer */
     .footer{
       display:flex; justify-content:space-between; align-items:center; gap:10px;
       flex:0 0 auto;
@@ -302,10 +307,21 @@
 <body>
   <div class="wrap">
     <div class="phone">
+
+      <!-- ✅ BGM2：把 bgm2.mp3 放到 chapter2.html 同目录 -->
+      <audio id="bgm2" src="bgm2.mp3" preload="auto" loop></audio>
+
       <div class="safe">
         <div class="topbar">
           <div class="pill"><span class="dot"></span><span id="modeText">Chapter 2 · 剧情选择</span></div>
-          <div class="pill"><span id="clock">--:--</span></div>
+
+          <!-- ✅ 右侧：音乐按钮 + 时钟 -->
+          <div style="display:flex; gap:10px; align-items:center;">
+            <button class="pillBtn" id="btnMusic2" type="button">
+              <span class="ic">🔈</span><span id="musicText2">音乐：关</span>
+            </button>
+            <div class="pill"><span id="clock">--:--</span></div>
+          </div>
         </div>
 
         <div class="stage">
@@ -334,7 +350,6 @@
         </div>
       </div>
 
-      <!-- ending overlay -->
       <div class="overlay" id="overlay">
         <div class="panel">
           <div class="panelHead">
@@ -352,6 +367,37 @@
 (() => {
   const $ = (id) => document.getElementById(id);
 
+  // --- BGM2（✅和 Chapter1 一样：必须手势触发播放） ---
+  const bgm2 = $('bgm2');
+  const btnMusic2 = $('btnMusic2');
+  const musicText2 = $('musicText2');
+  let musicEnabled2 = false;
+
+  function setMusicBtn2(){
+    musicText2.textContent = musicEnabled2 ? "音乐：开" : "音乐：关";
+    btnMusic2.querySelector('.ic').textContent = musicEnabled2 ? "🔊" : "🔈";
+  }
+  setMusicBtn2();
+
+  async function tryPlayMusic2(){
+    if (!musicEnabled2) return;
+    try{ await bgm2.play(); }catch(e){}
+  }
+
+  btnMusic2.addEventListener('click', async () => {
+    musicEnabled2 = !musicEnabled2;
+    setMusicBtn2();
+    if (musicEnabled2) await tryPlayMusic2();
+    else { try{ bgm2.pause(); }catch(e){} }
+  });
+
+  // ✅任意用户手势时，如果已开启音乐，就尝试播放（解决 iOS 限制）
+  function onAnyUserGesture(){
+    if (musicEnabled2) tryPlayMusic2();
+  }
+  window.addEventListener('pointerdown', onAnyUserGesture, {passive:true});
+  window.addEventListener('touchstart', onAnyUserGesture, {passive:true});
+
   // --- clock ---
   function tickClock(){
     const d = new Date();
@@ -367,7 +413,6 @@
   let cancelToken = { cancelled:false };
 
   const nodes = {
-    // Scene 1
     S1_START: {
       scene: 1,
       title: "Scene 1 · 那通电话之后",
@@ -421,7 +466,6 @@
       progress: 33,
     },
 
-    // Scene 2
     S2_START: {
       scene: 2,
       title: "Scene 2 · 她哭的时候",
@@ -493,7 +537,6 @@
       progress: 66,
     },
 
-    // Scene 3
     S3_START: {
       scene: 3,
       title: "Scene 3 · 洗澡时的那条消息",
@@ -562,7 +605,6 @@
     },
   };
 
-  // --- helpers ---
   function setProgress(pct){ $('bar').style.width = `${pct}%`; }
 
   function setHeader(node){
@@ -579,7 +621,6 @@
 
   function wait(ms){ return new Promise(r => setTimeout(r, ms)); }
 
-  // ✅关键：插入行后自动滚到底
   function addLine(text, cls=""){
     const div = document.createElement('div');
     div.className = `line ${cls}`.trim();
@@ -588,8 +629,6 @@
 
     requestAnimationFrame(() => {
       div.classList.add('show');
-
-      // ✅自动滚动到最新内容
       const dlg = document.querySelector('.card.dialogue');
       dlg.scrollTop = dlg.scrollHeight;
     });
@@ -672,7 +711,6 @@
 
   function hideOverlay(){ $('overlay').classList.remove('show'); }
 
-  // --- ending UI blocks ---
   function renderChatFail(){
     const wrap = document.createElement('div');
     wrap.className = "chat";
@@ -777,7 +815,6 @@
     return box;
   }
 
-  // --- flow ---
   async function goto(nodeId){
     game.nodeId = nodeId;
     const node = nodes[nodeId];
@@ -787,7 +824,6 @@
     clearLines();
     $('choices').innerHTML = "";
 
-    // ✅每次切换节点，把对话区滚到顶部（干净），后续 addLine 会自动滚到底
     const dlg = document.querySelector('.card.dialogue');
     dlg.scrollTop = 0;
 
@@ -802,6 +838,9 @@
   }
 
   async function onChoose(btn, choice){
+    // ✅这里也顺便触发一次尝试播放（不改变逻辑，只是更稳）
+    if (musicEnabled2) tryPlayMusic2();
+
     if (isTyping) return;
     lockOtherButtons(btn);
     vibrate(18);
@@ -809,7 +848,6 @@
     await goto(choice.next);
   }
 
-  // overlay continue
   $('continueBtn').onclick = async () => {
     const node = nodes[game.nodeId];
     hideOverlay();
@@ -819,7 +857,6 @@
     }
   };
 
-  // restart
   $('restartBtn').onclick = async () => {
     game.fast = false;
     $('skipBtn').textContent = "快速跳过文字";
@@ -827,7 +864,6 @@
     await goto("S1_START");
   };
 
-  // skip typing
   $('skipBtn').onclick = () => {
     game.fast = !game.fast;
     $('skipBtn').textContent = game.fast ? "恢复正常速度" : "快速跳过文字";
@@ -841,7 +877,6 @@
     }
   };
 
-  // start
   goto("S1_START");
 })();
 </script>
