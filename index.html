@@ -6,7 +6,7 @@
   <title>跳到第100句 · Chapter 1</title>
   <style>
     :root{
-      --bg:#f2f3f6;            /* ✅ 浅灰主背景 */
+      --bg:#f2f3f6;
       --ink:rgba(0,0,0,.85);
       --muted:rgba(0,0,0,.55);
       --card:rgba(255,255,255,.92);
@@ -23,25 +23,13 @@
     #app{position:relative;height:100%;width:100%;overflow:hidden}
     canvas{width:100%;height:100%;display:block;touch-action:none}
 
-    /* ✅ 适配安全区 */
-    .safePadTop{ padding-top: env(safe-area-inset-top); }
-    .safePadBottom{ padding-bottom: env(safe-area-inset-bottom); }
-
     .hud{
       position:absolute;left:12px;right:12px;top:12px;
-      display:flex;gap:10px;align-items:center;justify-content:space-between;
+      display:flex;gap:10px;align-items:center;justify-content:flex-end;
       pointer-events:none;
       padding-top: env(safe-area-inset-top);
       z-index:20;
     }
-    .pill{
-      pointer-events:auto;display:flex;align-items:center;gap:10px;
-      background:var(--card);border-radius:999px;padding:10px 12px;
-      box-shadow:var(--shadow);backdrop-filter:blur(8px);
-      max-width: 70vw;
-    }
-    .pill .title{font-weight:750;color:var(--ink);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .pill .sub{color:var(--muted);font-size:12px}
 
     .btn{
       pointer-events:auto;border:0;border-radius:999px;padding:10px 12px;
@@ -136,7 +124,7 @@
       font-weight:800;margin:0 4px;
     }
 
-    /* ✅ 蓄力条 UI */
+    /* ✅ 蓄力条 UI（保持在底部，不要跑到上面） */
     #chargeWrap{
       position:absolute;left:50%;transform:translateX(-50%);
       bottom: calc(48px + env(safe-area-inset-bottom));
@@ -163,7 +151,7 @@
       border-radius:999px;
     }
 
-    /* ✅ 失败弹框 */
+    /* ✅ 失败弹框（点击必须可用） */
     #failMask{
       position:absolute;inset:0;display:none;align-items:center;justify-content:center;
       background:rgba(0,0,0,.35);backdrop-filter:blur(8px);
@@ -184,7 +172,7 @@
     }
     #failCard .actions button.primary{background:rgba(0,0,0,.82);color:#fff;}
 
-    /* ✅ 终章滚动字幕（浅灰背景） */
+    /* ✅ 终章滚动字幕 */
     #creditsMask{
       position:absolute;inset:0;display:none;
       background:rgba(242,243,246,.98);
@@ -242,10 +230,8 @@
       to{ transform:translateX(-50%) translateY(-160vh); }
     }
 
-    /* ✅ 手机端更紧凑：HUD 变成两行，按钮变小 */
     @media (max-width: 520px){
       .hud{flex-direction:column;align-items:stretch}
-      .pill{max-width:none}
       .hint{font-size:11px}
       #toast .msg{font-size:13px}
       .btn{padding:9px 10px}
@@ -257,31 +243,22 @@
 <div id="app">
   <canvas id="c"></canvas>
 
-  <!-- ✅ 背景音乐（把 bgm.mp3 放到仓库根目录） -->
   <audio id="bgm" src="bgm.mp3" preload="auto" loop></audio>
 
+  <!-- ✅ 顶部横幅已去掉：只保留右上角按钮 + 常驻 Chapter2 -->
   <div class="hud">
-    <div class="pill">
-      <div>
-        <div class="title">跳到第100句 · Chapter 1</div>
-        <div class="sub"><span id="progressText">0/100</span> · 已解锁 <span id="unlockedText">0</span> 条</div>
-      </div>
+    <div style="display:flex; gap:10px; pointer-events:auto; flex-wrap:wrap; justify-content:flex-end; align-items:center;">
+      <button class="btn small" id="btnMusic">🔈 音乐：关</button>
+      <button class="btn" id="btnBook">📜 回忆册</button>
+
+      <a href="./chapter2.html" class="btn"
+         style="text-decoration:none; display:inline-flex; align-items:center;">
+        🎮 Chapter 2
+      </a>
+
+      <button class="btn" id="btnReset">↺ 重置进度</button>
     </div>
-   <div style="display:flex; gap:10px; pointer-events:auto; flex-wrap:wrap; justify-content:flex-end; align-items:center;">
-  <button class="btn small" id="btnMusic">🔈 音乐：关</button>
-  <button class="btn" id="btnBook">📜 回忆册</button>
-
-  <!-- 🎮 常驻入口：Chapter 2（始终可点击） -->
-  <a href="./chapter2.html"
-     class="btn"
-     style="text-decoration:none; display:inline-flex; align-items:center;">
-    🎮 Chapter 2
-  </a>
-
-  <button class="btn" id="btnReset">↺ 重置进度</button>
-</div>
-
-
+  </div><!-- ✅ 关键：hud 正确闭合，后面所有弹层才不会被吞点击 -->
 
   <div id="toast">
     <div class="who" id="toastWho"></div>
@@ -308,14 +285,12 @@
     </div>
   </div>
 
-  <!-- ✅ 蓄力条 -->
   <div id="chargeWrap">
     <div class="label">蓄力</div>
     <div class="bar"><i id="chargeFill"></i></div>
     <div class="label" id="chargePct">0%</div>
   </div>
 
-  <!-- ✅ 失败弹框 -->
   <div id="failMask">
     <div id="failCard">
       <div class="t">失败</div>
@@ -327,7 +302,6 @@
     </div>
   </div>
 
-  <!-- ✅ 结尾滚动字幕 -->
   <div id="creditsMask">
     <div id="creditsTopBar">
       <div class="title">Chapter 1 · 写给你的话</div>
@@ -348,7 +322,6 @@
     </div>
   </div>
 
-
   <div class="hint">
     <div class="k">操作：<span class="kbd">按住</span>蓄力，<span class="kbd">松开</span>起跳 · 失败会弹窗</div>
     <div class="k">小技巧：每跳一格都会弹出一条回忆 🙂</div>
@@ -357,15 +330,13 @@
 
 <script>
 (() => {
-  // ✅ 背景图（放在同目录：bg.jpg）
+  // ✅ 背景图
   const bgImg = new Image();
   bgImg.src = "./bg.jpg";
   let bgReady = false;
-  bgImg.onload = () => { bgReady = true; };
 
   /***********************
-   *  1) 100 条文本池（你说你自己的已够：这里保留结构，不强制改你内容）
-   *  ✅ 你可以直接把你仓库里那 100 条原文粘回这里覆盖即可
+   *  1) 文本池
    ***********************/
   const LINES_RAW = [
     { who: "吃吃", text: "我通过了你的朋友验证请求" },
@@ -489,7 +460,7 @@
   const LINES = LINES_RAW.slice(0, 100);
 
   /***********************
-   *  2) 本地存档
+   *  2) 存档
    ***********************/
   const STORE_KEY = "jump100_ch1_v2";
   const defaultSave = () => ({ index: 0, unlocked: [], best: 0 });
@@ -500,12 +471,8 @@
       if (!raw) return defaultSave();
       const s = JSON.parse(raw);
       if (!s || typeof s.index !== "number") return defaultSave();
-
       const unlocked = Array.isArray(s.unlocked) ? s.unlocked : [];
-      const unlockedClean = [...new Set(unlocked)]
-        .map(n => n|0)
-        .filter(n => n >= 1 && n <= 100);
-
+      const unlockedClean = [...new Set(unlocked)].map(n => n|0).filter(n => n >= 1 && n <= 100);
       return {
         index: Math.max(0, Math.min(100, s.index|0)),
         unlocked: unlockedClean,
@@ -517,24 +484,56 @@
   const saveState = () => localStorage.setItem(STORE_KEY, JSON.stringify(state));
 
   /***********************
-   *  3) Canvas / 物理参数
+   *  3) Canvas / 参数（✅ 性能：缓存尺寸，减少每帧 DOM 读）
    ***********************/
   const canvas = document.getElementById("c");
   const ctx = canvas.getContext("2d");
   const DPR = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
 
+  let viewW = 0, viewH = 0;
+  let bgCover = {dx:0,dy:0,dw:0,dh:0};
+  let bgGrad = null;
+
+  function recomputeBgCover(){
+    if (!bgReady || viewW === 0 || viewH === 0) return;
+    const iw = bgImg.naturalWidth || bgImg.width;
+    const ih = bgImg.naturalHeight || bgImg.height;
+    const scale = Math.max(viewW / iw, viewH / ih);
+    const dw = iw * scale;
+    const dh = ih * scale;
+    const dx = (viewW - dw) / 2;
+    const dy = (viewH - dh) / 2;
+    bgCover = {dx,dy,dw,dh};
+  }
+
   function resize(){
     const rect = canvas.getBoundingClientRect();
-    canvas.width = Math.floor(rect.width * DPR);
-    canvas.height = Math.floor(rect.height * DPR);
+    viewW = rect.width;
+    viewH = rect.height;
+
+    canvas.width = Math.floor(viewW * DPR);
+    canvas.height = Math.floor(viewH * DPR);
     ctx.setTransform(DPR,0,0,DPR,0,0);
+
+    // ✅ 性能：渐变只在 resize 时创建一次
+    bgGrad = ctx.createLinearGradient(0,0,0,viewH);
+    bgGrad.addColorStop(0,"rgba(0,0,0,0.02)");
+    bgGrad.addColorStop(1,"rgba(0,0,0,0)");
+
+    recomputeBgCover();
   }
   window.addEventListener("resize", resize);
+
+  bgImg.onload = () => {
+    bgReady = true;
+    recomputeBgCover();
+  };
+
   resize();
 
   const world = {
     gravity: 2200,
-    groundY: () => canvas.getBoundingClientRect().height * 0.70,
+    groundY: () => viewH * 0.70,
     camX: 0
   };
 
@@ -580,32 +579,24 @@
   const btnReset = document.getElementById("btnReset");
   const btnCloseModal = document.getElementById("btnCloseModal");
 
-  const progressText = document.getElementById("progressText");
-  const unlockedText = document.getElementById("unlockedText");
-
-  // 蓄力条
   const chargeWrap = document.getElementById("chargeWrap");
   const chargeFill = document.getElementById("chargeFill");
   const chargePct  = document.getElementById("chargePct");
 
-  // 失败
   const failMask = document.getElementById("failMask");
   const btnFailYes = document.getElementById("btnFailYes");
   const btnFailNo  = document.getElementById("btnFailNo");
 
-  // 音乐
   const bgm = document.getElementById("bgm");
   const btnMusic = document.getElementById("btnMusic");
   let musicEnabled = false;
 
-  // 结尾字幕
   const creditsMask = document.getElementById("creditsMask");
   const creditsInner = document.getElementById("creditsInner");
   const creditsText = document.getElementById("creditsText");
   const btnCreditsClose = document.getElementById("btnCreditsClose");
   const btnCreditsReplay = document.getElementById("btnCreditsReplay");
 
-  // 你想说的话（原文保留）
   const CREDITS_COPY =
 `这首歌是你分享给我的第一首歌，因为这首歌，我们开启了一段缘分。
 人们常说，事在人为，不是无缘，而是不愿。
@@ -618,16 +609,10 @@
 
 希望每次你打开它的时候，就可以想到我，
 这样我就相当于永远陪伴在你身边了。`;
-
   creditsText.textContent = CREDITS_COPY;
 
   let toastHideTimer = null;
   let lastShownIdx = 0;
-
-  function updateHUD(){
-    progressText.textContent = `${state.index}/100`;
-    unlockedText.textContent = `${state.unlocked.length}`;
-  }
 
   function showToast(idx){
     if (idx < 1 || idx > 100) return;
@@ -696,7 +681,7 @@
   modalMask.addEventListener("click", (e) => { if (e.target === modalMask) modalMask.style.display = "none"; });
 
   /***********************
-   *  5) 音乐控制（移动端：必须用户手势触发）
+   *  5) 音乐
    ***********************/
   function setMusicBtn(){
     btnMusic.textContent = musicEnabled ? "🔊 音乐：开" : "🔈 音乐：关";
@@ -705,11 +690,7 @@
 
   async function tryPlayMusic(){
     if (!musicEnabled) return;
-    try{
-      await bgm.play();
-    }catch(e){
-      // 移动端可能会阻止非手势播放：不报错给用户
-    }
+    try{ await bgm.play(); }catch(e){}
   }
 
   btnMusic.addEventListener("click", async () => {
@@ -720,7 +701,7 @@
   });
 
   /***********************
-   *  6) 关卡初始化
+   *  6) 初始化关卡
    ***********************/
   function initLevel(){
     const baseY = world.groundY();
@@ -740,16 +721,14 @@
 
     hideToast();
     hideDrawer();
-    updateHUD();
   }
 
   /***********************
-   *  7) 交互：按住蓄力 / 松开跳（失败锁定 + 结尾锁定）
+   *  7) 交互
    ***********************/
   let endMode = false;
   let failMode = false;
 
-  // 按住时间决定力度（你之前认可的手感）
   const MIN_HOLD = 80;
   const MAX_HOLD = 1500;
 
@@ -760,11 +739,10 @@
   }
 
   function pointerDown(){
-    // ✅ 第一次触发操作时，尝试播放音乐（符合手机策略：用户手势触发）
     if (musicEnabled) tryPlayMusic();
-
     if (endMode || failMode) return;
     if (!player.onGround) return;
+
     player.charging = true;
     player.chargeStart = performance.now();
     player.charge = 0;
@@ -775,12 +753,12 @@
   function pointerUp(){
     if (endMode || failMode) return;
     if (!player.charging) return;
+
     player.charging = false;
     chargeWrap.style.display = "none";
 
     const c = clamp(player.charge, 0, 1);
 
-    // 轻点小跳
     if (c === 0) {
       player.vx = 140;
       player.vy = -520;
@@ -803,7 +781,7 @@
   window.addEventListener("pointerup", pointerUp);
 
   /***********************
-   *  8) 失败逻辑
+   *  8) 失败逻辑（✅ 点击恢复：因 HUD 闭合，按钮已可点）
    ***********************/
   function respawnOnLastPlatform(){
     const cand = platforms
@@ -839,10 +817,12 @@
   btnFailYes.addEventListener("click", () => {
     state = defaultSave();
     saveState();
+
     failMode = false;
     failMask.style.display = "none";
     endMode = false;
     creditsMask.style.display = "none";
+
     initLevel();
   });
 
@@ -853,11 +833,10 @@
   });
 
   /***********************
-   *  9) 结尾滚动字幕
+   *  9) 结尾字幕
    ***********************/
   function showCredits(){
     creditsMask.style.display = "block";
-    // 重置动画：强制 reflow
     creditsInner.style.animation = "none";
     void creditsInner.offsetHeight;
     creditsInner.style.animation = "creditsScroll 26s linear forwards";
@@ -888,7 +867,6 @@
     if (!state.unlocked.includes(idx)) state.unlocked.push(idx);
     state.best = Math.max(state.best, state.index);
     saveState();
-    updateHUD();
 
     showToast(idx);
     scheduleToastHide();
@@ -902,14 +880,12 @@
       player.charging = false;
       player.vx = 0; player.vy = 0;
       chargeWrap.style.display = "none";
-
-      // ✅ 终章：弹滚动字幕
       showCredits();
     }
   }
 
   /***********************
-   *  11) 物理更新 + 碰撞
+   *  11) 物理更新（✅ 性能：使用缓存 viewW/viewH）
    ***********************/
   function step(dt){
     if (!endMode && !failMode && player.charging) {
@@ -928,7 +904,6 @@
         player.vx *= 0.98;
       }
 
-      const viewW = canvas.getBoundingClientRect().width;
       const targetCam = player.x - viewW * 0.35;
       world.camX = Math.max(0, targetCam);
 
@@ -949,14 +924,13 @@
           }
         }
 
-        const H = canvas.getBoundingClientRect().height;
-        if (player.y > H + 240) triggerFail();
+        if (player.y > viewH + 240) triggerFail();
       }
     }
   }
 
   /***********************
-   *  12) 绘制
+   *  12) 绘制（✅ 性能：不再每帧创建渐变/读 DOM 尺寸）
    ***********************/
   function roundRect(ctx, x,y,w,h,r){
     const rr = Math.min(r, w/2, h/2);
@@ -970,44 +944,26 @@
   }
 
   function draw(){
-    const W = canvas.getBoundingClientRect().width;
-    const H = canvas.getBoundingClientRect().height;
-    ctx.clearRect(0,0,W,H);
-    // ✅ 先画背景图（cover 铺满）
+    ctx.clearRect(0,0,viewW,viewH);
+
     if (bgReady) {
-      const iw = bgImg.naturalWidth || bgImg.width;
-      const ih = bgImg.naturalHeight || bgImg.height;
-
-      // cover 缩放：保证铺满屏幕
-      const scale = Math.max(W / iw, H / ih);
-      const dw = iw * scale;
-      const dh = ih * scale;
-      const dx = (W - dw) / 2;
-      const dy = (H - dh) / 2;
-
-      ctx.drawImage(bgImg, dx, dy, dw, dh);
-
-      // ✅ 轻灰蒙版：降低刺眼感（可调）
-      ctx.fillStyle = "rgba(246,247,251,0.70)"; // 越大越“灰”
-      ctx.fillRect(0, 0, W, H);
+      ctx.drawImage(bgImg, bgCover.dx, bgCover.dy, bgCover.dw, bgCover.dh);
+      ctx.fillStyle = "rgba(246,247,251,0.70)";
+      ctx.fillRect(0, 0, viewW, viewH);
     } else {
-      // 图片未加载时的兜底（保持原来那套浅灰）
       ctx.fillStyle = "rgba(246,247,251,1)";
-      ctx.fillRect(0, 0, W, H);
+      ctx.fillRect(0, 0, viewW, viewH);
     }
 
-
-    // 背景渐变（浅灰更柔和）
-    const g = ctx.createLinearGradient(0,0,0,H);
-    g.addColorStop(0,"rgba(0,0,0,0.02)");
-    g.addColorStop(1,"rgba(0,0,0,0)");
-    ctx.fillStyle = g;
-    ctx.fillRect(0,0,W,H);
+    if (bgGrad) {
+      ctx.fillStyle = bgGrad;
+      ctx.fillRect(0,0,viewW,viewH);
+    }
 
     for (const p of platforms) {
       const sx = p.x - world.camX;
       const sy = p.y;
-      if (sx < -260 || sx > W + 260) continue;
+      if (sx < -260 || sx > viewW + 260) continue;
 
       ctx.fillStyle = "rgba(0,0,0,0.10)";
       roundRect(ctx, sx, sy+3, p.w, p.h, 10);
@@ -1062,34 +1018,20 @@
   });
 
   /***********************
-    /***********************
    *  15) 初始化
    ***********************/
   initLevel();
-  updateHUD();
 
-  // 如果已到 100，直接显示字幕
   if (state.index >= 100) {
     endMode = true;
     showCredits();
-
-    
-
   } else if (state.index > 0) {
     showToast(state.index);
     scheduleToastHide();
   }
 
-  // ✅ 你漏掉的：启动主循环（必须要有）
   requestAnimationFrame(loop);
 })();
-
 </script>
 </body>
 </html>
-
-
-
-
-
-
