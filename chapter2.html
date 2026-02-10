@@ -6,35 +6,48 @@
   <title>Chapter 2 · 剧情选择</title>
   <style>
     :root{
-      --bg1:#0b0f1a;
-      --bg2:#0f172a;
+      /* ✅ 藏蓝渐变（更统一） */
+      --bg1:#071022;
+      --bg2:#0a1633;
+      --bg3:#0b1e3f;
+
       --card:rgba(255,255,255,.08);
       --card2:rgba(255,255,255,.12);
       --ink:rgba(255,255,255,.92);
-      --muted:rgba(255,255,255,.65);
-      --muted2:rgba(255,255,255,.45);
+      --muted:rgba(255,255,255,.68);
+      --muted2:rgba(255,255,255,.46);
+
       --accent:#7dd3fc;
       --danger:#ff4d4f;
       --ok:#34d399;
+
       --shadow:0 18px 60px rgba(0,0,0,.45);
       --radius:22px;
     }
     *{box-sizing:border-box}
     html,body{height:100%;margin:0}
     body{
-      background: radial-gradient(1200px 800px at 30% 10%, #1f2a44 0%, transparent 60%),
-                  radial-gradient(1000px 700px at 80% 40%, #0b2b3a 0%, transparent 55%),
-                  linear-gradient(180deg, var(--bg2), var(--bg1));
+      background:
+        radial-gradient(1000px 700px at 25% 10%, rgba(125,211,252,.14) 0%, transparent 60%),
+        radial-gradient(900px 650px at 80% 60%, rgba(52,211,153,.10) 0%, transparent 55%),
+        linear-gradient(180deg, var(--bg3), var(--bg2) 45%, var(--bg1));
       color:var(--ink);
       font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,"PingFang SC","Noto Sans SC","Microsoft YaHei",sans-serif;
       overflow:hidden;
     }
 
-    .wrap{height:100%;display:flex;align-items:center;justify-content:center;padding:18px}
+    /* ✅ 让手机框永远不把底部挤出去（关键修复：100dvh） */
+    .wrap{
+      height:100%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:18px;
+    }
     .phone{
       width:min(420px, 100%);
-      height:min(860px, 100%);
-      background:rgba(0,0,0,.25);
+      height:min(860px, calc(100dvh - 36px)); /* ✅ 用 100dvh 解决地址栏/高度变化 */
+      background:rgba(0,0,0,.22);
       border:1px solid rgba(255,255,255,.10);
       border-radius:34px;
       box-shadow: var(--shadow);
@@ -42,10 +55,8 @@
       overflow:hidden;
       backdrop-filter: blur(10px);
     }
-    <audio id="bgm2" src="bgm2.mp3" preload="auto" loop></audio>
-
     .safe{
-      padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom)) 16px;
+      padding: max(14px, env(safe-area-inset-top)) 16px max(14px, env(safe-area-inset-bottom)) 16px;
       height:100%;
       display:flex;
       flex-direction:column;
@@ -60,57 +71,21 @@
       flex:0 0 auto;
       gap:10px;
     }
-    <div class="topbar">
-  <div class="pill"><span class="dot"></span><span id="modeText">Chapter 2 · 剧情选择</span></div>
-  <div style="display:flex; gap:10px; align-items:center;">
-    <button class="pill" id="btnMusic2" style="cursor:pointer; color:var(--muted2);">
-      🔈 音乐：关
-    </button>
-    <div class="pill"><span id="clock">--:--</span></div>
-  </div>
-</div>
-    // --- bgm2 ---
-const bgm2 = $('bgm2');
-const btnMusic2 = $('btnMusic2');
-let music2Enabled = false;
-
-function setMusic2Btn(){
-  btnMusic2.textContent = music2Enabled ? "🔊 音乐：开" : "🔈 音乐：关";
-}
-setMusic2Btn();
-
-async function tryPlayMusic2(){
-  if (!music2Enabled) return;
-  try{ await bgm2.play(); }catch(e){ /* 移动端可能阻止非手势播放，忽略 */ }
-}
-
-btnMusic2.onclick = async () => {
-  music2Enabled = !music2Enabled;
-  setMusic2Btn();
-  if (music2Enabled) await tryPlayMusic2();
-  else { try{ bgm2.pause(); }catch(e){} }
-};
-
-// 额外保险：用户第一次点任意按钮时也尝试播放（符合“必须手势触发”规则）
-document.addEventListener('pointerdown', () => { if (music2Enabled) tryPlayMusic2(); }, { once:false });
-
-
-    /* ✅ 右上角小按钮（音乐开关） */
-    .pillBtn{
-      border:1px solid rgba(255,255,255,.10);
-      background:rgba(255,255,255,.06);
-      color:rgba(255,255,255,.80);
-      border-radius:999px;
+    .pill{
+      background:rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.12);
       padding:8px 10px;
-      cursor:pointer;
+      border-radius:999px;
+      display:inline-flex; gap:8px; align-items:center;
+      user-select:none;
       -webkit-tap-highlight-color: transparent;
-      transition: transform 120ms ease, background 200ms ease, opacity 200ms ease;
-      display:inline-flex; align-items:center; gap:8px;
-      font-size:12px;
     }
-    .pillBtn:hover{background:rgba(255,255,255,.10)}
-    .pillBtn:active{transform: translateY(1px)}
-    .pillBtn .ic{opacity:.9}
+    .dot{width:6px;height:6px;border-radius:50%;background:var(--accent); box-shadow:0 0 18px rgba(125,211,252,.6)}
+
+    /* ✅ 音乐开关：内嵌 pill（不做额外按钮设计） */
+    .pillToggle{cursor:pointer}
+    .pillToggle:active{transform: translateY(1px)}
+    .pillToggle .ic{opacity:.9}
 
     .stage{
       flex:1 1 auto;
@@ -125,23 +100,26 @@ document.addEventListener('pointerdown', () => { if (music2Enabled) tryPlayMusic
       display:flex; align-items:flex-end; justify-content:space-between; gap:10px;
       flex:0 0 auto;
     }
-    .title{font-size:18px; font-weight:700; letter-spacing:.2px}
+    .title{
+      font-size:18px; font-weight:750; letter-spacing:.2px;
+      color:rgba(255,255,255,.94);
+    }
     .subtitle{font-size:12px;color:var(--muted2)}
     .progress{
       height:8px; width:120px; border-radius:999px;
-      background:rgba(255,255,255,.10);
+      background:rgba(255,255,255,.12);
       overflow:hidden;
     }
     .bar{
       height:100%; width:0%;
-      background:linear-gradient(90deg, rgba(125,211,252,.9), rgba(52,211,153,.85));
+      background:linear-gradient(90deg, rgba(125,211,252,.92), rgba(52,211,153,.88));
       border-radius:999px;
       transition: width 600ms ease;
     }
 
     .card{
       background:var(--card);
-      border:1px solid rgba(255,255,255,.10);
+      border:1px solid rgba(255,255,255,.12);
       border-radius: var(--radius);
       padding:14px 14px;
       box-shadow: 0 10px 30px rgba(0,0,0,.25);
@@ -163,8 +141,8 @@ document.addEventListener('pointerdown', () => { if (music2Enabled) tryPlayMusic
       opacity:0;
       transform: translateY(10px);
       transition: opacity 420ms ease, transform 420ms ease;
-      color:var(--ink);
-      line-height:1.55;
+      color:rgba(255,255,255,.92);
+      line-height:1.58;
       font-size:15px;
       white-space:pre-wrap;
     }
@@ -178,9 +156,9 @@ document.addEventListener('pointerdown', () => { if (music2Enabled) tryPlayMusic
       width:100%;
       border-radius:16px;
       padding:12px 12px;
-      border:1px solid rgba(255,255,255,.14);
+      border:1px solid rgba(255,255,255,.16);
       background:rgba(255,255,255,.08);
-      color:var(--ink);
+      color:rgba(255,255,255,.92);
       font-size:15px;
       text-align:left;
       cursor:pointer;
@@ -258,6 +236,7 @@ document.addEventListener('pointerdown', () => { if (music2Enabled) tryPlayMusic
       line-height:1.4;
       border:1px solid rgba(255,255,255,.10);
       background:rgba(255,255,255,.08);
+      color:rgba(255,255,255,.92);
     }
     .msg.me{align-self:flex-end; background:rgba(125,211,252,.10); border-color:rgba(125,211,252,.18)}
     .msg.them{align-self:flex-start}
@@ -316,7 +295,7 @@ document.addEventListener('pointerdown', () => { if (music2Enabled) tryPlayMusic
     }
     .linkbtn{
       background:transparent;
-      border:1px solid rgba(255,255,255,.14);
+      border:1px solid rgba(255,255,255,.16);
       color:var(--muted);
       border-radius:14px;
       padding:10px 12px;
@@ -342,11 +321,11 @@ document.addEventListener('pointerdown', () => { if (music2Enabled) tryPlayMusic
         <div class="topbar">
           <div class="pill"><span class="dot"></span><span id="modeText">Chapter 2 · 剧情选择</span></div>
 
-          <!-- ✅ 右侧：音乐按钮 + 时钟 -->
+          <!-- ✅ 右侧：音乐开关（内嵌） + 时钟 -->
           <div style="display:flex; gap:10px; align-items:center;">
-            <button class="pillBtn" id="btnMusic2" type="button">
-              <span class="ic">🔈</span><span id="musicText2">音乐：关</span>
-            </button>
+            <div class="pill pillToggle" id="btnMusic2" role="button" aria-label="music toggle">
+              <span class="ic" id="musicIc2">🔈</span><span id="musicText2">音乐：关</span>
+            </div>
             <div class="pill"><span id="clock">--:--</span></div>
           </div>
         </div>
@@ -377,6 +356,7 @@ document.addEventListener('pointerdown', () => { if (music2Enabled) tryPlayMusic
         </div>
       </div>
 
+      <!-- ending overlay -->
       <div class="overlay" id="overlay">
         <div class="panel">
           <div class="panelHead">
@@ -387,6 +367,7 @@ document.addEventListener('pointerdown', () => { if (music2Enabled) tryPlayMusic
           <div class="panelBody small" id="endNote"></div>
         </div>
       </div>
+
     </div>
   </div>
 
@@ -394,21 +375,25 @@ document.addEventListener('pointerdown', () => { if (music2Enabled) tryPlayMusic
 (() => {
   const $ = (id) => document.getElementById(id);
 
-  // --- BGM2（✅和 Chapter1 一样：必须手势触发播放） ---
+  /* ========= BGM2（修复无声：必须用户手势触发） ========= */
   const bgm2 = $('bgm2');
   const btnMusic2 = $('btnMusic2');
   const musicText2 = $('musicText2');
+  const musicIc2 = $('musicIc2');
   let musicEnabled2 = false;
 
   function setMusicBtn2(){
     musicText2.textContent = musicEnabled2 ? "音乐：开" : "音乐：关";
-    btnMusic2.querySelector('.ic').textContent = musicEnabled2 ? "🔊" : "🔈";
+    musicIc2.textContent = musicEnabled2 ? "🔊" : "🔈";
   }
   setMusicBtn2();
 
   async function tryPlayMusic2(){
     if (!musicEnabled2) return;
-    try{ await bgm2.play(); }catch(e){}
+    try{
+      // iOS / 移动端策略：必须在用户手势里调用 play()
+      await bgm2.play();
+    }catch(e){}
   }
 
   btnMusic2.addEventListener('click', async () => {
@@ -418,14 +403,14 @@ document.addEventListener('pointerdown', () => { if (music2Enabled) tryPlayMusic
     else { try{ bgm2.pause(); }catch(e){} }
   });
 
-  // ✅任意用户手势时，如果已开启音乐，就尝试播放（解决 iOS 限制）
+  // ✅ 任意用户手势触发一次播放（如果已经开了音乐）
   function onAnyUserGesture(){
     if (musicEnabled2) tryPlayMusic2();
   }
   window.addEventListener('pointerdown', onAnyUserGesture, {passive:true});
   window.addEventListener('touchstart', onAnyUserGesture, {passive:true});
 
-  // --- clock ---
+  /* ========= clock ========= */
   function tickClock(){
     const d = new Date();
     const hh = String(d.getHours()).padStart(2,'0');
@@ -434,12 +419,14 @@ document.addEventListener('pointerdown', () => { if (music2Enabled) tryPlayMusic
   }
   tickClock(); setInterval(tickClock, 10000);
 
-  // --- data ---
+  /* ========= data ========= */
   const game = { nodeId: "S1_START", fast: false };
   let isTyping = false;
   let cancelToken = { cancelled:false };
 
+  /* ✅ 剧情：按你原文一字不动（Scene1/2/3 + 结局 + THE_END 全保留） */
   const nodes = {
+    // Scene 1
     S1_START: {
       scene: 1,
       title: "Scene 1 · 那通电话之后",
@@ -493,6 +480,7 @@ document.addEventListener('pointerdown', () => { if (music2Enabled) tryPlayMusic
       progress: 33,
     },
 
+    // Scene 2
     S2_START: {
       scene: 2,
       title: "Scene 2 · 她哭的时候",
@@ -564,6 +552,7 @@ document.addEventListener('pointerdown', () => { if (music2Enabled) tryPlayMusic
       progress: 66,
     },
 
+    // Scene 3
     S3_START: {
       scene: 3,
       title: "Scene 3 · 洗澡时的那条消息",
@@ -632,6 +621,7 @@ document.addEventListener('pointerdown', () => { if (music2Enabled) tryPlayMusic
     },
   };
 
+  /* ========= helpers ========= */
   function setProgress(pct){ $('bar').style.width = `${pct}%`; }
 
   function setHeader(node){
@@ -738,6 +728,7 @@ document.addEventListener('pointerdown', () => { if (music2Enabled) tryPlayMusic
 
   function hideOverlay(){ $('overlay').classList.remove('show'); }
 
+  /* ========= ending UI blocks ========= */
   function renderChatFail(){
     const wrap = document.createElement('div');
     wrap.className = "chat";
@@ -842,6 +833,7 @@ document.addEventListener('pointerdown', () => { if (music2Enabled) tryPlayMusic
     return box;
   }
 
+  /* ========= flow ========= */
   async function goto(nodeId){
     game.nodeId = nodeId;
     const node = nodes[nodeId];
@@ -865,7 +857,7 @@ document.addEventListener('pointerdown', () => { if (music2Enabled) tryPlayMusic
   }
 
   async function onChoose(btn, choice){
-    // ✅这里也顺便触发一次尝试播放（不改变逻辑，只是更稳）
+    // ✅ 选择也算用户手势：如果音乐已开，顺手尝试播放（更稳）
     if (musicEnabled2) tryPlayMusic2();
 
     if (isTyping) return;
@@ -875,6 +867,7 @@ document.addEventListener('pointerdown', () => { if (music2Enabled) tryPlayMusic
     await goto(choice.next);
   }
 
+  /* overlay continue */
   $('continueBtn').onclick = async () => {
     const node = nodes[game.nodeId];
     hideOverlay();
@@ -884,6 +877,7 @@ document.addEventListener('pointerdown', () => { if (music2Enabled) tryPlayMusic
     }
   };
 
+  /* restart */
   $('restartBtn').onclick = async () => {
     game.fast = false;
     $('skipBtn').textContent = "快速跳过文字";
@@ -891,6 +885,7 @@ document.addEventListener('pointerdown', () => { if (music2Enabled) tryPlayMusic
     await goto("S1_START");
   };
 
+  /* skip typing */
   $('skipBtn').onclick = () => {
     game.fast = !game.fast;
     $('skipBtn').textContent = game.fast ? "恢复正常速度" : "快速跳过文字";
@@ -904,9 +899,9 @@ document.addEventListener('pointerdown', () => { if (music2Enabled) tryPlayMusic
     }
   };
 
+  /* start */
   goto("S1_START");
 })();
 </script>
 </body>
 </html>
-
