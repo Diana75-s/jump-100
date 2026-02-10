@@ -36,17 +36,24 @@
       overflow:hidden;
     }
 
-    /* ✅ 让手机框永远不把底部挤出去（关键修复：100dvh） */
+    /* ✅ 外层：svh 兜底 + dvh 优先，避免 iOS 地址栏高度抖动 */
     .wrap{
-      height:100%;
+      height:100svh;
+      height:100dvh;
       display:flex;
       align-items:center;
       justify-content:center;
       padding:18px;
     }
+    /* iOS 旧版本兜底 */
+    @supports (-webkit-touch-callout: none) {
+      .wrap{ height:-webkit-fill-available; }
+    }
+
     .phone{
       width:min(420px, 100%);
-      height:min(860px, calc(100dvh - 36px)); /* ✅ 用 100dvh 解决地址栏/高度变化 */
+      height:min(860px, calc(100svh - 36px));
+      height:min(860px, calc(100dvh - 36px)); /* ✅ dvh 优先 */
       background:rgba(0,0,0,.22);
       border:1px solid rgba(255,255,255,.10);
       border-radius:34px;
@@ -55,6 +62,8 @@
       overflow:hidden;
       backdrop-filter: blur(10px);
     }
+
+    /* ✅ 关键修复：safe 不再裁切底部（不滚动），让 stage 去滚动 */
     .safe{
       padding: max(14px, env(safe-area-inset-top)) 16px max(14px, env(safe-area-inset-bottom)) 16px;
       height:100%;
@@ -62,6 +71,7 @@
       flex-direction:column;
       gap:12px;
       min-height:0;
+      overflow:hidden; /* ✅ 防止整体溢出被 phone 裁切时无法滚动：由 stage 滚动解决 */
     }
 
     .topbar{
@@ -87,6 +97,7 @@
     .pillToggle:active{transform: translateY(1px)}
     .pillToggle .ic{opacity:.9}
 
+    /* ✅ stage 变成滚动容器：小屏时不会遮挡 choices/footer */
     .stage{
       flex:1 1 auto;
       min-height:0;
@@ -94,6 +105,10 @@
       flex-direction:column;
       gap:12px;
       position:relative;
+
+      overflow:auto;                    /* ✅ 让 stage 自己滚 */
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: 10px;             /* ✅ 避免最后一块贴死 */
     }
 
     .header{
@@ -125,9 +140,10 @@
       box-shadow: 0 10px 30px rgba(0,0,0,.25);
     }
 
+    /* ✅ 对话框仍然内部滚动，但默认不会挤爆整体（配合 stage 滚动更稳） */
     .card.dialogue{
       flex:1 1 auto;
-      min-height:0;
+      min-height:120px;                 /* ✅ 给个下限，避免极端小屏压扁 */
       overflow:auto;
       -webkit-overflow-scrolling: touch;
     }
@@ -200,6 +216,7 @@
       opacity:0; pointer-events:none;
       transition: opacity 360ms ease;
       padding:18px;
+      z-index:20;
     }
     .overlay.show{opacity:1; pointer-events:auto}
     .panel{
@@ -289,10 +306,20 @@
       80%{transform:translateX(4px)}
     }
 
+    /* ✅ footer 永远可见：sticky 贴底 */
     .footer{
       display:flex; justify-content:space-between; align-items:center; gap:10px;
       flex:0 0 auto;
+
+      position: sticky;
+      bottom: 0;
+      z-index: 5;
+
+      padding-top: 10px;
+      background: linear-gradient(180deg, rgba(10,22,51,0), rgba(10,22,51,.55) 35%, rgba(7,16,34,.85));
+      backdrop-filter: blur(8px);
     }
+
     .linkbtn{
       background:transparent;
       border:1px solid rgba(255,255,255,.16);
@@ -382,6 +409,17 @@
   const musicIc2 = $('musicIc2');
   let musicEnabled2 = false;
 
+  // ✅ 避免被浏览器继承静音/非内联播放策略
+  try{
+    bgm2.preload = "auto";
+    bgm2.loop = true;
+    bgm2.muted = false;
+    bgm2.volume = 1;
+    bgm2.playsInline = true;
+    bgm2.setAttribute("playsinline","");
+    bgm2.setAttribute("webkit-playsinline","");
+  }catch(_){}
+
   function setMusicBtn2(){
     musicText2.textContent = musicEnabled2 ? "音乐：开" : "音乐：关";
     musicIc2.textContent = musicEnabled2 ? "🔊" : "🔈";
@@ -390,17 +428,18 @@
 
   async function tryPlayMusic2(){
     if (!musicEnabled2) return;
-    try{
-      // iOS / 移动端策略：必须在用户手势里调用 play()
-      await bgm2.play();
-    }catch(e){}
+    try{ await bgm2.play(); }catch(e){}
+  }
+
+  function stopMusic2(){
+    try{ bgm2.pause(); }catch(e){}
   }
 
   btnMusic2.addEventListener('click', async () => {
     musicEnabled2 = !musicEnabled2;
     setMusicBtn2();
     if (musicEnabled2) await tryPlayMusic2();
-    else { try{ bgm2.pause(); }catch(e){} }
+    else stopMusic2();
   });
 
   // ✅ 任意用户手势触发一次播放（如果已经开了音乐）
@@ -857,7 +896,7 @@
   }
 
   async function onChoose(btn, choice){
-    // ✅ 选择也算用户手势：如果音乐已开，顺手尝试播放（更稳）
+    // ✅ 点击选项也算用户手势：如果音乐已开，顺手尝试播放（更稳）
     if (musicEnabled2) tryPlayMusic2();
 
     if (isTyping) return;
@@ -869,6 +908,7 @@
 
   /* overlay continue */
   $('continueBtn').onclick = async () => {
+    if (musicEnabled2) tryPlayMusic2(); // ✅ 继续也触发一次
     const node = nodes[game.nodeId];
     hideOverlay();
     await wait(120);
@@ -879,6 +919,7 @@
 
   /* restart */
   $('restartBtn').onclick = async () => {
+    if (musicEnabled2) tryPlayMusic2(); // ✅ 重来触发一次
     game.fast = false;
     $('skipBtn').textContent = "快速跳过文字";
     hideOverlay();
@@ -887,6 +928,7 @@
 
   /* skip typing */
   $('skipBtn').onclick = () => {
+    if (musicEnabled2) tryPlayMusic2(); // ✅ 跳过触发一次
     game.fast = !game.fast;
     $('skipBtn').textContent = game.fast ? "恢复正常速度" : "快速跳过文字";
 
